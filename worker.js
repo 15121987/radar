@@ -19,7 +19,7 @@ export default {
         // Health check — open /api/generate in a browser to see this.
         return json({
           status: "worker is deployed and running",
-          worker_build: "v7",
+          worker_build: "v8",
           gemini_key_present: !!env.GEMINI_API_KEY,
           anthropic_fallback: !!env.ANTHROPIC_API_KEY,
           model: MODEL,
@@ -88,7 +88,7 @@ async function callGemini(key, prompt, useSearch, wantJson) {
               MODEL + ":generateContent?key=" + key;
   const body = {
     contents: [{ role: "user", parts: [{ text: prompt }] }],
-    generationConfig: { temperature: 0.9, maxOutputTokens: 2048 }
+    generationConfig: { temperature: 0.9, maxOutputTokens: 3000 }
   };
   if (useSearch) body.tools = [{ google_search: {} }];
   if (wantJson) body.generationConfig.responseMimeType = "application/json";
