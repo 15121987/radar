@@ -266,7 +266,7 @@
     </div>
   </main>
 
-  <footer class="wrap">Current scans live results for ideation. Verify facts and figures before publishing.</footer>
+  <footer class="wrap">Current scans live results for ideation. Verify facts and figures before publishing. · build v3</footer>
 
 <script>
 const API="/api/generate";
@@ -334,7 +334,8 @@ function parseJSON(text){
   if(a!==-1&&(o===-1||a<o)){s=a;e=t.lastIndexOf("]");}
   else if(o!==-1){s=o;e=t.lastIndexOf("}");}
   if(s!==-1&&e!==-1)t=t.slice(s,e+1);
-  return JSON.parse(sanitizeJSON(t));
+  try{return JSON.parse(sanitizeJSON(t));}
+  catch(_){return JSON.parse(t.replace(/[\u0000-\u001F]+/g," "));}
 }
 function loader(target,sub){
   const i=Math.floor(Math.random()*LOAD_MSGS.length);
