@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#14110E" />
+<meta name="color-scheme" content="dark" />
+<link rel="manifest" href="/manifest.json" />
+<link rel="apple-touch-icon" href="/icon-192.png" />
+<title>Current — from a link to a week of content</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme:dark;
+    --bg:#14110E;
+    --surface:#1C1813;
+    --surface-2:#241F18;
+    --border:#322B21;
+    --border-soft:#28221B;
+    --text:#EDE6D8;
+    --muted:#9A9082;
+    --faint:#6B6358;
+    --gold:#C9A24B;
+    --gold-bright:#E0B85C;
+    --gold-soft:rgba(201,162,75,.12);
+    --gold-line:rgba(201,162,75,.32);
+    --radius:14px;
+    --maxw:980px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:#14110E}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:"DM Sans",system-ui,sans-serif;
+    font-size:16px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(1200px 600px at 50% -10%, rgba(201,162,75,.06), transparent 70%);
+  }
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px}
+  ::selection{background:var(--gold-soft)}
+
+  /* ---------- header ---------- */
+  header{padding:34px 0 0}
+  .brand{display:flex;align-items:baseline;gap:12px}
+  .mark{
+    font-family:"Cormorant Garamond",serif;
+    font-weight:700;font-size:30px;letter-spacing:.5px;color:var(--text);
+    position:relative;
+  }
+  .mark::after{
+    content:"";position:absolute;left:0;bottom:-2px;height:2px;width:0;
+    background:var(--gold);transition:width .9s cubic-bezier(.2,.8,.2,1) .3s;
+  }
+  body.ready .mark::after{width:100%}
+  .brand .dot{width:6px;height:6px;border-radius:50%;background:var(--gold);transform:translateY(-9px)}
+  .kicker{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--faint);margin-left:auto;align-self:center}
+
+  /* ---------- hero ---------- */
+  .hero{padding:64px 0 30px;text-align:center;max-width:680px;margin:0 auto}
+  .hero h1{
+    font-family:"Cormorant Garamond",serif;font-weight:600;
+    font-size:clamp(34px,6vw,54px);line-height:1.04;letter-spacing:.2px;
+  }
+  .hero h1 em{font-style:italic;color:var(--gold)}
+  .hero p{color:var(--muted);margin-top:16px;font-size:17px}
+
+  .bar{
+    margin:34px auto 0;display:flex;gap:10px;max-width:600px;
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius);padding:8px;align-items:center;
+    transition:border-color .25s, box-shadow .25s;
+  }
+  .bar:focus-within{border-color:var(--gold-line);box-shadow:0 0 0 4px var(--gold-soft)}
+  .bar input{
+    flex:1;background:transparent;border:0;outline:0;color:var(--text);
+    -webkit-text-fill-color:var(--text);caret-color:var(--gold);
+    font-family:inherit;font-size:16px;padding:12px 14px;
+  }
+  .bar input::placeholder{color:var(--faint)}
+  .btn{
+    border:0;cursor:pointer;font-family:inherit;font-weight:600;font-size:15px;
+    background:var(--gold);color:#1a1509;padding:13px 22px;border-radius:10px;
+    transition:background .2s, transform .08s;white-space:nowrap;
+  }
+  .btn:hover{background:var(--gold-bright)}
+  .btn:active{transform:translateY(1px)}
+  .btn:disabled{opacity:.55;cursor:default}
+
+  .chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:18px}
+  .chip{
+    background:transparent;border:1px solid var(--border);color:var(--muted);
+    border-radius:999px;padding:7px 15px;font-size:13px;cursor:pointer;font-family:inherit;
+    transition:border-color .2s,color .2s,background .2s;
+  }
+  .chip:hover{border-color:var(--gold-line);color:var(--text);background:var(--gold-soft)}
+
+  /* ---------- results ---------- */
+  section.results{padding:28px 0 80px}
+  .results-head{display:flex;align-items:baseline;gap:12px;margin-bottom:20px}
+  .results-head h2{font-family:"Cormorant Garamond",serif;font-weight:600;font-size:26px}
+  .results-head span{font-size:13px;color:var(--faint)}
+  .refresh{
+    display:none;margin-left:auto;align-self:center;align-items:center;gap:7px;
+    background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer;
+    font-family:inherit;font-size:13px;font-weight:600;padding:8px 14px;border-radius:8px;transition:all .2s;
+  }
+  .refresh:hover{border-color:var(--gold-line);color:var(--text);background:var(--gold-soft)}
+  .refresh:disabled{opacity:.55;cursor:default}
+  .refresh .ic{display:inline-block;font-size:15px;line-height:1}
+  .refresh.spinning .ic{animation:spin 1s linear infinite}
+
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+  .topic{
+    text-align:left;background:var(--surface);border:1px solid var(--border-soft);
+    border-radius:var(--radius);padding:20px 20px 18px;cursor:pointer;
+    transition:border-color .2s, transform .2s, background .2s;
+    opacity:0;transform:translateY(10px);
+  }
+  .topic.in{animation:rise .55s cubic-bezier(.2,.8,.2,1) forwards}
+  @keyframes rise{to{opacity:1;transform:none}}
+  .topic:hover{border-color:var(--gold-line);background:var(--surface-2)}
+  .topic .num{font-size:12px;color:var(--gold);letter-spacing:.15em;font-weight:600}
+  .topic-top{display:flex;align-items:center;gap:10px}
+  .ttag{font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:var(--gold);border:1px solid var(--gold-line);border-radius:999px;padding:3px 9px;background:var(--gold-soft)}
+  .topic h3{font-family:"Cormorant Garamond",serif;font-weight:600;font-size:22px;line-height:1.15;margin:8px 0 8px}
+  .topic p{color:var(--muted);font-size:14px;line-height:1.5}
+  .topic .aud{margin-top:14px;font-size:11.5px;letter-spacing:.05em;color:var(--faint);text-transform:uppercase}
+  .topic .go{margin-top:14px;color:var(--gold);font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;opacity:.8}
+  .topic:hover .go{opacity:1}
+
+  /* ---------- workspace ---------- */
+  .work{display:none}
+  .work.on{display:block;padding:24px 0 90px}
+  .back{
+    background:none;border:0;color:var(--muted);cursor:pointer;font-family:inherit;font-size:14px;
+    display:flex;align-items:center;gap:8px;padding:6px 0;margin-bottom:18px;transition:color .2s;
+  }
+  .back:hover{color:var(--text)}
+  .work-title{font-family:"Cormorant Garamond",serif;font-weight:600;font-size:clamp(26px,4.5vw,38px);line-height:1.08}
+  .work-angle{color:var(--muted);margin-top:10px;max-width:640px}
+  .work-aud{display:inline-block;margin-top:14px;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);border:1px solid var(--gold-line);border-radius:999px;padding:5px 12px}
+
+  .tabs{display:flex;gap:4px;margin:30px 0 20px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+  .tab{
+    background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);
+    cursor:pointer;font-family:inherit;font-size:15px;font-weight:500;padding:12px 16px;
+    margin-bottom:-1px;transition:color .2s,border-color .2s;
+  }
+  .tab:hover{color:var(--text)}
+  .tab.active{color:var(--gold);border-color:var(--gold)}
+
+  .panel{min-height:200px}
+  .card{
+    background:var(--surface);border:1px solid var(--border-soft);border-radius:var(--radius);
+    padding:24px;animation:fade .4s ease;
+  }
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:12px}
+  .card-top .label{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint)}
+  .copy{
+    background:transparent;border:1px solid var(--border);color:var(--muted);cursor:pointer;
+    font-family:inherit;font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:8px;
+    transition:all .2s;display:flex;align-items:center;gap:6px;
+  }
+  .copy:hover{border-color:var(--gold-line);color:var(--text)}
+  .copy.done{color:var(--gold);border-color:var(--gold-line)}
+
+  .hook{font-family:"Cormorant Garamond",serif;font-size:24px;font-weight:600;line-height:1.2;color:var(--text);margin-bottom:20px}
+  .beat{display:grid;grid-template-columns:64px 1fr;gap:16px;padding:14px 0;border-top:1px solid var(--border-soft)}
+  .beat:first-of-type{border-top:0;padding-top:0}
+  .beat .t{color:var(--gold);font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+  .beat .vo{color:var(--text);font-size:15px}
+  .beat .vis{color:var(--muted);font-size:13px;margin-top:5px;font-style:italic}
+
+  .slide{display:grid;grid-template-columns:34px 1fr;gap:16px;padding:16px 0;border-top:1px solid var(--border-soft)}
+  .slide:first-of-type{border-top:0;padding-top:0}
+  .slide .sn{width:30px;height:30px;border-radius:8px;background:var(--gold-soft);color:var(--gold);
+    display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600}
+  .slide h4{font-size:16px;font-weight:600;color:var(--text);margin-bottom:5px}
+  .slide p{color:var(--muted);font-size:14px;line-height:1.5}
+
+  .post{white-space:pre-wrap;font-size:15.5px;line-height:1.65;color:var(--text)}
+
+  .meta{margin-top:22px;padding-top:18px;border-top:1px solid var(--border-soft)}
+  .meta .caption{color:var(--text);font-size:14.5px;line-height:1.55}
+  .tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}
+  .tag{font-size:12.5px;color:var(--gold);background:var(--gold-soft);border-radius:6px;padding:4px 9px}
+
+  /* ---------- states ---------- */
+  .loading{display:flex;flex-direction:column;align-items:center;gap:18px;padding:60px 0;color:var(--muted)}
+  .spinner{width:34px;height:34px;border:2.5px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loading .msg{font-size:14.5px}
+  .loading .sub{font-size:12.5px;color:var(--faint)}
+  .error{
+    background:var(--surface);border:1px solid #4a2f2a;border-left:3px solid #b8654f;
+    border-radius:10px;padding:18px 20px;color:var(--text);font-size:14.5px;
+  }
+  .error b{color:#d99}
+  .error span{color:var(--muted);display:block;margin-top:6px;font-size:13.5px}
+
+  footer{padding:30px 0 40px;text-align:center;color:var(--faint);font-size:12.5px;border-top:1px solid var(--border-soft)}
+
+  @media (max-width:640px){
+    .grid{grid-template-columns:1fr}
+    .bar{flex-direction:column;align-items:stretch}
+    .btn{width:100%}
+    .hero{padding:44px 0 24px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none !important;transition:none !important}
+    .topic{opacity:1;transform:none}
+    .mark::after{width:100%}
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="brand">
+        <span class="mark">Current</span><span class="dot"></span>
+        <span class="kicker">content radar</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- HERO / INPUT -->
+    <div class="hero" id="hero">
+      <h1>Catch what's trending.<br>Turn it into <em>content</em>.</h1>
+      <p>Paste a link or type a niche. Current reads the live web and hands you reels, carousels, and LinkedIn posts ready to publish.</p>
+      <div class="bar">
+        <input id="q" type="text" placeholder="https://example.com  ·  or  ·  personal finance for millennials"
+               autocomplete="off" spellcheck="false" aria-label="Link or topic" />
+        <button class="btn" id="find">Find trends</button>
+      </div>
+      <div class="chips" id="chips"></div>
+    </div>
+
+    <!-- RESULTS -->
+    <section class="results" id="results" style="display:none">
+      <div class="results-head">
+        <h2 id="results-title">Trending now</h2>
+        <span id="results-sub"></span>
+        <button class="refresh" id="refresh" title="Show me different topics"><span class="ic">↻</span>Refresh</button>
+      </div>
+      <div id="results-body"></div>
+    </section>
+
+    <!-- WORKSPACE -->
+    <div class="work" id="work">
+      <button class="back" id="back">← All trends</button>
+      <h2 class="work-title" id="w-title"></h2>
+      <p class="work-angle" id="w-angle"></p>
+      <span class="work-aud" id="w-aud"></span>
+      <div class="tabs">
+        <button class="tab active" data-tab="reel">Reel</button>
+        <button class="tab" data-tab="carousel">Carousel</button>
+        <button class="tab" data-tab="linkedin">LinkedIn</button>
+      </div>
+      <div class="panel" id="panel"></div>
+    </div>
+  </main>
+
+  <footer class="wrap">Current scans live results for ideation. Verify facts and figures before publishing.</footer>
+
+<script>
+const API="/api/generate";
+const EXAMPLES=["Personal finance India","SaaS sales","Mutual funds & SIPs","Creator economy","AI for marketers"];
+const LOAD_MSGS=["Reading the room…","Scanning live results…","Spotting what's rising…","Sorting signal from noise…"];
+
+const state={input:"",topics:[],sel:null,tab:"reel",cache:{}};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+window.addEventListener("load",()=>document.body.classList.add("ready"));
+
+// example chips
+const chips=$("chips");
+EXAMPLES.forEach(e=>{
+  const b=document.createElement("button");
+  b.className="chip";b.textContent=e;
+  b.onclick=()=>{$("q").value=e;findTrends();};
+  chips.appendChild(b);
+});
+
+$("find").onclick=()=>findTrends(false);
+$("refresh").onclick=()=>findTrends(true);
+$("q").addEventListener("keydown",e=>{if(e.key==="Enter")findTrends();});
+$("back").onclick=()=>{$("work").classList.remove("on");$("results").style.display="";$("hero").style.display="";window.scrollTo({top:0,behavior:"smooth"});};
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>setTab(t.dataset.tab));
+
+async function callClaude(prompt,useSearch){
+  const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt,search:!!useSearch})});
+  let d=null;
+  try{d=await r.json();}catch(e){}
+  if(!r.ok)throw new Error((d&&d.error)?d.error:("HTTP "+r.status+" \u2014 the /api/generate function may not be deployed"));
+  if(d&&d.error)throw new Error(d.error);
+  return (d&&d.text)||"";
+}
+function sanitizeJSON(t){
+  // Escape raw control characters that appear INSIDE string values, which
+  // Gemini sometimes emits (literal newlines/tabs) and which break JSON.parse.
+  let out="",inStr=false,esc=false;
+  for(let i=0;i<t.length;i++){
+    const c=t[i],code=t.charCodeAt(i);
+    if(inStr){
+      if(esc){out+=c;esc=false;continue;}
+      if(c==="\\"){out+=c;esc=true;continue;}
+      if(c==='"'){out+=c;inStr=false;continue;}
+      if(code<0x20){
+        if(c==="\n")out+="\\n";
+        else if(c==="\r")out+="\\r";
+        else if(c==="\t")out+="\\t";
+        else out+="\\u"+code.toString(16).padStart(4,"0");
+        continue;
+      }
+      out+=c;
+    }else{
+      if(c==='"'){inStr=true;}
+      out+=c;
+    }
+  }
+  return out;
+}
+function parseJSON(text){
+  let t=text.replace(/```json/gi,"").replace(/```/g,"").trim();
+  const a=t.indexOf("["),o=t.indexOf("{");
+  let s=-1,e=-1;
+  if(a!==-1&&(o===-1||a<o)){s=a;e=t.lastIndexOf("]");}
+  else if(o!==-1){s=o;e=t.lastIndexOf("}");}
+  if(s!==-1&&e!==-1)t=t.slice(s,e+1);
+  return JSON.parse(sanitizeJSON(t));
+}
+function loader(target,sub){
+  const i=Math.floor(Math.random()*LOAD_MSGS.length);
+  target.innerHTML=`<div class="loading"><div class="spinner"></div><div class="msg">${LOAD_MSGS[i]}</div><div class="sub">${sub||""}</div></div>`;
+}
+function errorBox(target,msg){
+  target.innerHTML=`<div class="error"><b>That didn't go through.</b><span>${esc(msg)}</span></div>`;
+}
+
+async function findTrends(isRefresh){
+  const q=isRefresh?state.input:$("q").value.trim();
+  if(!q){$("q").focus();return;}
+  state.input=q;
+  const rb=$("refresh");
+  $("find").disabled=true;
+  $("results").style.display="";
+  $("work").classList.remove("on");
+  $("results-title").textContent="Trending now";
+  if(isRefresh){rb.disabled=true;rb.classList.add("spinning");}
+  else{$("results-sub").textContent="";rb.style.display="none";}
+  loader($("results-body"),isRefresh?"Finding fresh angles you haven't seen\u2026":"This searches the live web \u2014 a few seconds.");
+  if(!isRefresh)window.scrollTo({top:300,behavior:"smooth"});
+  const seen=isRefresh?state.topics.map(t=>t.title):[];
+  try{
+    const avoid=seen.length?`\nDo NOT repeat any of these already-shown ideas \u2014 return six DIFFERENT ones: ${seen.map(x=>'"'+x+'"').join(", ")}.`:"";
+    const prompt=`You are a sharp content strategist and social trend-spotter. Input from the user: "${q}".
+If it is a URL, infer the brand, industry and audience from it. If it is a topic or niche, work within it.${avoid}
+Use web search to ground every idea in what is happening RIGHT NOW. The six ideas MUST be a balanced mix across these sources:
+- Current global and national news / macro events that genuinely connect to this niche
+- What is trending on INSTAGRAM for this niche right now: viral reel formats, trending audio, popular hashtags, and angles currently getting engagement
+- One or two strong evergreen angles for the niche
+Respond with ONLY a JSON array of exactly 6 objects, no prose, no markdown:
+[{"title":"the trending topic or content idea","angle":"one sentence on why it matters now / the hook","audience":"who this is for","tag":"a short source label, exactly one of: Global, Instagram, Evergreen"}]`;
+    const txt=await callClaude(prompt,true);
+    const topics=parseJSON(txt);
+    if(!Array.isArray(topics)||!topics.length)throw new Error("no topics");
+    state.topics=topics;state.cache={};
+    renderTopics();
+  }catch(err){
+    errorBox($("results-body"),"Couldn't pull trends. Technical detail: "+(err&&err.message?err.message:String(err))+" \u2014 copy this line so we can pinpoint the cause.");
+  }finally{$("find").disabled=false;rb.disabled=false;rb.classList.remove("spinning");}
+}
+
+function renderTopics(){
+  $("results-sub").textContent=`6 ideas around \u201c${state.input}\u201d`;
+  $("refresh").style.display="flex";
+  const grid=document.createElement("div");grid.className="grid";
+  state.topics.forEach((t,i)=>{
+    const c=document.createElement("button");
+    c.className="topic";c.style.animationDelay=(i*60)+"ms";
+    c.innerHTML=`<div class="topic-top"><span class="num">0${i+1}</span>${t.tag?`<span class="ttag">${esc(t.tag)}</span>`:""}</div>
+      <h3>${esc(t.title)}</h3>
+      <p>${esc(t.angle)}</p>
+      <div class="aud">For ${esc(t.audience||"a broad audience")}</div>
+      <div class="go">Create content →</div>`;
+    c.onclick=()=>openTopic(i);
+    grid.appendChild(c);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>c.classList.add("in")));
+  });
+  const body=$("results-body");body.innerHTML="";body.appendChild(grid);
+}
+
+function openTopic(i){
+  state.sel=i;state.tab="reel";
+  const t=state.topics[i];
+  $("hero").style.display="none";
+  $("results").style.display="none";
+  $("work").classList.add("on");
+  $("w-title").textContent=t.title;
+  $("w-angle").textContent=t.angle;
+  $("w-aud").textContent="For "+(t.audience||"a broad audience");
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x.dataset.tab==="reel"));
+  window.scrollTo({top:0,behavior:"smooth"});
+  loadTab();
+}
+function setTab(tab){
+  state.tab=tab;
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x.dataset.tab===tab));
+  loadTab();
+}
+
+async function loadTab(){
+  const key=state.sel+"-"+state.tab;
+  if(state.cache[key]){render(state.cache[key]);return;}
+  loader($("panel"),"Drafting your "+state.tab+"…");
+  const t=state.topics[state.sel];
+  try{
+    const data=await callClaude(buildPrompt(state.tab,t),false);
+    const parsed=parseJSON(data);
+    state.cache[key]=parsed;
+    if(state.tab===state.tab) render(parsed); // guard
+  }catch(err){
+    errorBox($("panel"),"Couldn't draft this. Technical detail: "+(err&&err.message?err.message:String(err)));
+  }
+}
+
+function buildPrompt(tab,t){
+  const base=`Topic: "${t.title}". Angle: ${t.angle}. Audience: ${t.audience}.`;
+  if(tab==="reel")return `${base}
+Write a punchy short-form video reel (~30-45s). Respond with ONLY JSON, no markdown:
+{"hook":"scroll-stopping opening line","beats":[{"time":"0-3s","voiceover":"what's said","visual":"what's shown"}],"caption":"post caption","hashtags":["tag"]}
+Use 4-5 beats.`;
+  if(tab==="carousel")return `${base}
+Write an Instagram/LinkedIn carousel. Respond with ONLY JSON, no markdown:
+{"slides":[{"heading":"slide heading","body":"concise slide text"}],"caption":"post caption","hashtags":["tag"]}
+Use 5-6 slides: slide 1 is a hook cover, last is a clear call to action.`;
+  return `${base}
+Write a LinkedIn post. Respond with ONLY JSON, no markdown:
+{"post":"full post with \\n line breaks, strong first line, value in the middle, a question to close","hashtags":["tag"]}`;
+}
+
+function tags(arr){return (arr||[]).map(h=>`<span class="tag">${esc(h.replace(/^#/,"#").startsWith("#")?h:"#"+h)}</span>`).join("");}
+
+function render(d){
+  let inner="",plain="";
+  if(state.tab==="reel"){
+    const beats=(d.beats||[]).map(b=>
+      `<div class="beat"><div class="t">${esc(b.time)}</div><div><div class="vo">${esc(b.voiceover)}</div><div class="vis">Visual: ${esc(b.visual)}</div></div></div>`).join("");
+    inner=`<div class="hook">${esc(d.hook)}</div>${beats}
+      <div class="meta"><div class="caption">${esc(d.caption)}</div><div class="tags">${tags(d.hashtags)}</div></div>`;
+    plain=`HOOK: ${d.hook}\n\n`+(d.beats||[]).map(b=>`[${b.time}] ${b.voiceover}\n  (Visual: ${b.visual})`).join("\n")+`\n\nCaption: ${d.caption}\n\n${(d.hashtags||[]).map(h=>h.startsWith("#")?h:"#"+h).join(" ")}`;
+  }else if(state.tab==="carousel"){
+    const slides=(d.slides||[]).map((s,i)=>
+      `<div class="slide"><div class="sn">${i+1}</div><div><h4>${esc(s.heading)}</h4><p>${esc(s.body)}</p></div></div>`).join("");
+    inner=`${slides}<div class="meta"><div class="caption">${esc(d.caption)}</div><div class="tags">${tags(d.hashtags)}</div></div>`;
+    plain=(d.slides||[]).map((s,i)=>`SLIDE ${i+1}: ${s.heading}\n${s.body}`).join("\n\n")+`\n\nCaption: ${d.caption}\n\n${(d.hashtags||[]).map(h=>h.startsWith("#")?h:"#"+h).join(" ")}`;
+  }else{
+    inner=`<div class="post">${esc(d.post).replace(/\n/g,"<br>")}</div>
+      <div class="meta"><div class="tags">${tags(d.hashtags)}</div></div>`;
+    plain=`${d.post}\n\n${(d.hashtags||[]).map(h=>h.startsWith("#")?h:"#"+h).join(" ")}`;
+  }
+  const label={reel:"Reel script",carousel:"Carousel",linkedin:"LinkedIn post"}[state.tab];
+  $("panel").innerHTML=`<div class="card">
+    <div class="card-top"><span class="label">${label}</span>
+      <button class="copy" id="copyBtn">Copy</button></div>${inner}</div>`;
+  $("copyBtn").onclick=function(){copyText(plain,this);};
+}
+
+function copyText(txt,btn){
+  const done=()=>{btn.textContent="Copied ✓";btn.classList.add("done");setTimeout(()=>{btn.textContent="Copy";btn.classList.remove("done");},1800);};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done).catch(()=>fallback());}
+  else fallback();
+  function fallback(){const a=document.createElement("textarea");a.value=txt;document.body.appendChild(a);a.select();try{document.execCommand("copy");done();}catch(e){}document.body.removeChild(a);}
+}
+</script>
+<script>
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));
+}
+</script>
+</body>
+</html>
