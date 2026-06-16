@@ -42,24 +42,25 @@ async function handleGenerate(request, env) {
 
   const prompt = (payload && payload.prompt) || "";
   const useSearch = !!(payload && payload.search);
+  const wantJson = !!(payload && payload.json);
   if (!prompt) return json({ error: "Missing prompt." }, 400);
 
   try {
     let text = "";
     try {
-      text = await callGemini(env.GEMINI_API_KEY, prompt, useSearch);
+      text = await callGemini(env.GEMINI_API_KEY, prompt, useSearch, wantJson);
     } catch (e) {
-      if (useSearch) text = await callGemini(env.GEMINI_API_KEY, prompt, false);
+      if (useSearch) text = await callGemini(env.GEMINI_API_KEY, prompt, false, wantJson);
       else throw e;
     }
-    if (!text && useSearch) text = await callGemini(env.GEMINI_API_KEY, prompt, false);
+    if (!text && useSearch) text = await callGemini(env.GEMINI_API_KEY, prompt, false, wantJson);
     return json({ text });
   } catch (err) {
     return json({ error: "Request failed: " + String(err) }, 502);
   }
 }
 
-async function callGemini(key, prompt, useSearch) {
+async function callGemini(key, prompt, useSearch, wantJson) {
   const url = "https://generativelanguage.googleapis.com/v1beta/models/" +
               MODEL + ":generateContent?key=" + key;
   const body = {
@@ -67,6 +68,7 @@ async function callGemini(key, prompt, useSearch) {
     generationConfig: { temperature: 0.9, maxOutputTokens: 1500 }
   };
   if (useSearch) body.tools = [{ google_search: {} }];
+  if (wantJson) body.generationConfig.responseMimeType = "application/json";
 
   const r = await fetch(url, {
     method: "POST",
