@@ -266,7 +266,7 @@
     </div>
   </main>
 
-  <footer class="wrap">Current scans live results for ideation. Verify facts and figures before publishing. · build v6</footer>
+  <footer class="wrap">Current scans live results for ideation. Verify facts and figures before publishing. · build v8</footer>
 
 <script>
 const API="/api/generate";
@@ -379,17 +379,18 @@ async function findTrends(isRefresh){
   const seen=isRefresh?state.topics.map(t=>t.title):[];
   try{
     const avoid=seen.length?` Avoid repeating these already-shown ideas: ${seen.join("; ")}.`:"";
-    const research=await callClaude(`Research what is trending RIGHT NOW for: "${q}". If it is a URL, infer the brand, industry and audience from it. Cover three things: (1) current global or national news tied to this niche, (2) what is trending on INSTAGRAM for this niche \u2014 viral reel formats, trending audio, popular hashtags, high-engagement angles, (3) one or two evergreen angles. Write a concise research brief.`,true,false);
-    const formatPrompt=`Using the research below, produce exactly 6 content ideas for "${q}".${avoid}
+    const research=await callClaude(`Research what is trending RIGHT NOW for: "${q}". If it is a URL, infer the brand, industry and audience from it. Find at least SIX distinct, specific angles spread across: current global/national news tied to this niche; what is trending on INSTAGRAM for this niche (viral reel formats, trending audio, popular hashtags, high-engagement angles); and one or two evergreen angles. Write a concise research brief that clearly lists these angles.`,true,false);
+    const formatPrompt=`Based on the research below, produce EXACTLY 6 content ideas for "${q}". You MUST return all six, each fully filled in. If the research is thin, use your own expertise to complete the set of six.${avoid}
 
 RESEARCH:
 ${research}
 
-Return the 6 ideas as PLAIN TEXT \u2014 no JSON, no markdown, no citation markers like [cite]. Separate each idea with a line containing only three dashes (---). For each idea give exactly these four lines:
-TITLE: the idea
+Output PLAIN TEXT only \u2014 no JSON, no markdown, no citation markers like [cite]. Separate each of the six ideas with a line containing only three dashes (---). For EACH idea give all four of these lines, each on its own line:
+TITLE: a specific, punchy idea
 ANGLE: one sentence on why it matters now
 AUDIENCE: who it is for
-TAG: one of Global, Instagram, or Evergreen`;
+TAG: one of Global, Instagram, or Evergreen
+Remember: six complete ideas, each with all four lines, separated by ---.`;
     const txt=await callClaude(formatPrompt,false,false);
     const topics=parseTopics(txt);
     if(!topics.length)throw new Error("no topics");
