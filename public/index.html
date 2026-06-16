@@ -266,7 +266,7 @@
     </div>
   </main>
 
-  <footer class="wrap">Current scans live results for ideation. Verify facts and figures before publishing. · build v4</footer>
+  <footer class="wrap">Current scans live results for ideation. Verify facts and figures before publishing. · build v5</footer>
 
 <script>
 const API="/api/generate";
@@ -378,18 +378,17 @@ async function findTrends(isRefresh){
   if(!isRefresh)window.scrollTo({top:300,behavior:"smooth"});
   const seen=isRefresh?state.topics.map(t=>t.title):[];
   try{
-    const avoid=seen.length?`\nDo NOT repeat any of these already-shown ideas \u2014 return six DIFFERENT ones: ${seen.map(x=>x).join("; ")}.`:"";
-    const prompt=`You are a sharp content strategist and social trend-spotter. Input from the user: "${q}".
-If it is a URL, infer the brand, industry and audience from it. If it is a topic or niche, work within it.${avoid}
-Use web search to ground every idea in what is happening RIGHT NOW. The six ideas must be a balanced mix of: current global/national news tied to this niche; what is trending on INSTAGRAM for this niche (viral reel formats, trending audio, hashtags, high-engagement angles); and one or two evergreen angles.
+    const avoid=seen.length?` Avoid repeating these already-shown ideas: ${seen.join("; ")}.`:"";
+    const research=await callClaude(`Research what is trending RIGHT NOW for: "${q}". If it is a URL, infer the brand, industry and audience from it. Cover three things: (1) current global or national news tied to this niche, (2) what is trending on INSTAGRAM for this niche \u2014 viral reel formats, trending audio, popular hashtags, high-engagement angles, (3) one or two evergreen angles. Write a concise research brief.`,true,false);
+    const formatPrompt=`Using the research below, produce exactly 6 content ideas for "${q}".${avoid}
 
-Return the six ideas as PLAIN TEXT in EXACTLY this format. No JSON, no markdown, no extra words. Separate each idea with a line containing only three dashes (---). For each idea give these four lines:
-TITLE: the topic or content idea
-ANGLE: one sentence on why it matters now / the hook
-AUDIENCE: who it is for
-TAG: one of Global, Instagram, or Evergreen`;
-    const txt=await callClaude(prompt,true,false);
-    const topics=parseTopics(txt);
+RESEARCH:
+${research}
+
+Return ONLY a JSON array of exactly 6 objects. Each object has keys: "title" (the idea), "angle" (one sentence on why it matters now, with NO citation markers), "audience" (who it is for), "tag" (exactly one of: Global, Instagram, Evergreen).`;
+    const jsonText=await callClaude(formatPrompt,false,true);
+    let topics=parseJSON(jsonText);
+    if(!Array.isArray(topics))topics=topics.topics||topics.ideas||topics.items||Object.values(topics).find(Array.isArray)||[];
     if(!Array.isArray(topics)||!topics.length)throw new Error("no topics");
     state.topics=topics;state.cache={};
     renderTopics();
@@ -399,7 +398,7 @@ TAG: one of Global, Instagram, or Evergreen`;
 }
 
 function renderTopics(){
-  $("results-sub").textContent=`6 ideas around \u201c${state.input}\u201d`;
+  $("results-sub").textContent=`${state.topics.length} ideas around \u201c${state.input}\u201d`;
   $("refresh").style.display="flex";
   const grid=document.createElement("div");grid.className="grid";
   state.topics.forEach((t,i)=>{
