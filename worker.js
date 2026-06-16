@@ -6,6 +6,9 @@
 // Free-tier model with Google Search grounding. If you see "model not found",
 // the name changed — try "gemini-3.5-flash".
 const MODEL = "gemini-2.5-flash";
+// Paid fallback, used ONLY when Gemini fails. Cheapest model by default;
+// change to "claude-sonnet-4-6" for higher quality at higher cost.
+const ANTHROPIC_MODEL = "claude-haiku-4-5-20251001";
 
 export default {
   async fetch(request, env) {
@@ -16,12 +19,13 @@ export default {
         // Health check — open /api/generate in a browser to see this.
         return json({
           status: "worker is deployed and running",
-          worker_build: "v6",
+          worker_build: "v7",
           gemini_key_present: !!env.GEMINI_API_KEY,
+          anthropic_fallback: !!env.ANTHROPIC_API_KEY,
           model: MODEL,
           next_step: env.GEMINI_API_KEY
-            ? "Key found. If search still fails, try model gemini-3.5-flash, or wait out a rate limit."
-            : "GEMINI_API_KEY is NOT set. Add it in Pages > Settings > Environment variables (Production), then redeploy."
+            ? "Key found. Anthropic fallback is " + (env.ANTHROPIC_API_KEY ? "ON." : "OFF (add ANTHROPIC_API_KEY to enable).")
+            : "GEMINI_API_KEY is NOT set. Add it in your Worker settings, then redeploy."
         }, 200);
       }
       if (request.method === "POST") return handleGenerate(request, env);
@@ -34,8 +38,8 @@ export default {
 };
 
 async function handleGenerate(request, env) {
-  if (!env.GEMINI_API_KEY) {
-    return json({ error: "Server missing GEMINI_API_KEY. Add it in your Pages settings, then redeploy." }, 500);
+  if (!env.GEMINI_API_KEY && !env.ANTHROPIC_API_KEY) {
+    return json({ error: "Server has no API keys set. Add GEMINI_API_KEY (and optionally ANTHROPIC_API_KEY)." }, 500);
   }
   let payload;
   try { payload = await request.json(); }
@@ -46,19 +50,37 @@ async function handleGenerate(request, env) {
   const wantJson = !!(payload && payload.json);
   if (!prompt) return json({ error: "Missing prompt." }, 400);
 
-  try {
-    let text = "";
+  let text = "";
+  let geminiError = "";
+
+  // 1) FREE path: Gemini first (it already retries transient 503/429 internally,
+  //    plus an ungrounded retry here if a grounded call fails).
+  if (env.GEMINI_API_KEY) {
     try {
       text = await callGemini(env.GEMINI_API_KEY, prompt, useSearch, wantJson);
-    } catch (e) {
-      if (useSearch) text = await callGemini(env.GEMINI_API_KEY, prompt, false, wantJson);
-      else throw e;
+      if (!text && useSearch) text = await callGemini(env.GEMINI_API_KEY, prompt, false, wantJson);
+    } catch (e1) {
+      geminiError = String((e1 && e1.message) || e1);
+      if (useSearch) {
+        try { text = await callGemini(env.GEMINI_API_KEY, prompt, false, wantJson); } catch (e2) {}
+      }
     }
-    if (!text && useSearch) text = await callGemini(env.GEMINI_API_KEY, prompt, false, wantJson);
-    return json({ text });
-  } catch (err) {
-    return json({ error: "Request failed: " + String(err) }, 502);
   }
+
+  // 2) LAST RESORT (paid): Anthropic, only if Gemini produced nothing.
+  if (!text && env.ANTHROPIC_API_KEY) {
+    try {
+      text = await callAnthropic(env.ANTHROPIC_API_KEY, prompt, useSearch);
+    } catch (e3) {
+      return json({ error: "Gemini unavailable" + (geminiError ? " (" + geminiError + ")" : "") + "; Anthropic fallback also failed: " + String((e3 && e3.message) || e3) }, 502);
+    }
+  }
+
+  if (!text) {
+    return json({ error: "Could not generate" + (geminiError ? ": " + geminiError : "") + (env.ANTHROPIC_API_KEY ? "" : " (no Anthropic fallback configured)") }, 502);
+  }
+
+  return json({ text });
 }
 
 async function callGemini(key, prompt, useSearch, wantJson) {
@@ -93,6 +115,31 @@ async function callGemini(key, prompt, useSearch, wantJson) {
     throw lastErr;
   }
   throw lastErr || new Error("Gemini unavailable after retries");
+}
+
+async function callAnthropic(key, prompt, useSearch) {
+  const body = {
+    model: ANTHROPIC_MODEL,
+    max_tokens: 2048,
+    messages: [{ role: "user", content: prompt }]
+  };
+  if (useSearch) body.tools = [{ type: "web_search_20250305", name: "web_search" }];
+
+  const r = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": key,
+      "anthropic-version": "2023-06-01"
+    },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error("Anthropic " + r.status + ": " + t.slice(0, 200));
+  }
+  const d = await r.json();
+  return (d.content || []).filter((b) => b.type === "text").map((b) => b.text).join("\n");
 }
 
 function json(obj, status) {
