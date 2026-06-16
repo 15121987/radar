@@ -266,7 +266,7 @@
     </div>
   </main>
 
-  <footer class="wrap">Current scans live results for ideation. Verify facts and figures before publishing. · build v5</footer>
+  <footer class="wrap">Current scans live results for ideation. Verify facts and figures before publishing. · build v6</footer>
 
 <script>
 const API="/api/generate";
@@ -385,11 +385,14 @@ async function findTrends(isRefresh){
 RESEARCH:
 ${research}
 
-Return ONLY a JSON array of exactly 6 objects. Each object has keys: "title" (the idea), "angle" (one sentence on why it matters now, with NO citation markers), "audience" (who it is for), "tag" (exactly one of: Global, Instagram, Evergreen).`;
-    const jsonText=await callClaude(formatPrompt,false,true);
-    let topics=parseJSON(jsonText);
-    if(!Array.isArray(topics))topics=topics.topics||topics.ideas||topics.items||Object.values(topics).find(Array.isArray)||[];
-    if(!Array.isArray(topics)||!topics.length)throw new Error("no topics");
+Return the 6 ideas as PLAIN TEXT \u2014 no JSON, no markdown, no citation markers like [cite]. Separate each idea with a line containing only three dashes (---). For each idea give exactly these four lines:
+TITLE: the idea
+ANGLE: one sentence on why it matters now
+AUDIENCE: who it is for
+TAG: one of Global, Instagram, or Evergreen`;
+    const txt=await callClaude(formatPrompt,false,false);
+    const topics=parseTopics(txt);
+    if(!topics.length)throw new Error("no topics");
     state.topics=topics;state.cache={};
     renderTopics();
   }catch(err){
