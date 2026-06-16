@@ -266,7 +266,7 @@
     </div>
   </main>
 
-  <footer class="wrap">Current scans live results for ideation. Verify facts and figures before publishing. · build v3</footer>
+  <footer class="wrap">Current scans live results for ideation. Verify facts and figures before publishing. · build v4</footer>
 
 <script>
 const API="/api/generate";
@@ -294,13 +294,31 @@ $("q").addEventListener("keydown",e=>{if(e.key==="Enter")findTrends();});
 $("back").onclick=()=>{$("work").classList.remove("on");$("results").style.display="";$("hero").style.display="";window.scrollTo({top:0,behavior:"smooth"});};
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>setTab(t.dataset.tab));
 
-async function callClaude(prompt,useSearch){
-  const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt,search:!!useSearch})});
+async function callClaude(prompt,useSearch,wantJson){
+  const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt,search:!!useSearch,json:!!wantJson})});
   let d=null;
   try{d=await r.json();}catch(e){}
   if(!r.ok)throw new Error((d&&d.error)?d.error:("HTTP "+r.status+" \u2014 the /api/generate function may not be deployed"));
   if(d&&d.error)throw new Error(d.error);
   return (d&&d.text)||"";
+}
+function parseTopics(text){
+  // Robust label-based parser (no JSON, so quotes/apostrophes can't break it).
+  let blocks=text.split(/^\s*-{2,}\s*$/m).map(b=>b.trim()).filter(Boolean);
+  if(blocks.length<2){
+    blocks=text.split(/\n(?=\s*TITLE\s*:)/i).map(b=>b.trim()).filter(Boolean);
+  }
+  const field=(b,label)=>{
+    const m=b.match(new RegExp("(?:^|\\n)\\s*"+label+"\\s*:\\s*(.*)","i"));
+    return m?m[1].trim():"";
+  };
+  const topics=[];
+  for(const b of blocks){
+    const title=field(b,"TITLE");
+    if(!title)continue;
+    topics.push({title,angle:field(b,"ANGLE"),audience:field(b,"AUDIENCE"),tag:field(b,"TAG")});
+  }
+  return topics;
 }
 function sanitizeJSON(t){
   // Escape raw control characters that appear INSIDE string values, which
@@ -360,17 +378,18 @@ async function findTrends(isRefresh){
   if(!isRefresh)window.scrollTo({top:300,behavior:"smooth"});
   const seen=isRefresh?state.topics.map(t=>t.title):[];
   try{
-    const avoid=seen.length?`\nDo NOT repeat any of these already-shown ideas \u2014 return six DIFFERENT ones: ${seen.map(x=>'"'+x+'"').join(", ")}.`:"";
+    const avoid=seen.length?`\nDo NOT repeat any of these already-shown ideas \u2014 return six DIFFERENT ones: ${seen.map(x=>x).join("; ")}.`:"";
     const prompt=`You are a sharp content strategist and social trend-spotter. Input from the user: "${q}".
 If it is a URL, infer the brand, industry and audience from it. If it is a topic or niche, work within it.${avoid}
-Use web search to ground every idea in what is happening RIGHT NOW. The six ideas MUST be a balanced mix across these sources:
-- Current global and national news / macro events that genuinely connect to this niche
-- What is trending on INSTAGRAM for this niche right now: viral reel formats, trending audio, popular hashtags, and angles currently getting engagement
-- One or two strong evergreen angles for the niche
-Respond with ONLY a JSON array of exactly 6 objects, no prose, no markdown:
-[{"title":"the trending topic or content idea","angle":"one sentence on why it matters now / the hook","audience":"who this is for","tag":"a short source label, exactly one of: Global, Instagram, Evergreen"}]`;
-    const txt=await callClaude(prompt,true);
-    const topics=parseJSON(txt);
+Use web search to ground every idea in what is happening RIGHT NOW. The six ideas must be a balanced mix of: current global/national news tied to this niche; what is trending on INSTAGRAM for this niche (viral reel formats, trending audio, hashtags, high-engagement angles); and one or two evergreen angles.
+
+Return the six ideas as PLAIN TEXT in EXACTLY this format. No JSON, no markdown, no extra words. Separate each idea with a line containing only three dashes (---). For each idea give these four lines:
+TITLE: the topic or content idea
+ANGLE: one sentence on why it matters now / the hook
+AUDIENCE: who it is for
+TAG: one of Global, Instagram, or Evergreen`;
+    const txt=await callClaude(prompt,true,false);
+    const topics=parseTopics(txt);
     if(!Array.isArray(topics)||!topics.length)throw new Error("no topics");
     state.topics=topics;state.cache={};
     renderTopics();
@@ -423,7 +442,7 @@ async function loadTab(){
   loader($("panel"),"Drafting your "+state.tab+"…");
   const t=state.topics[state.sel];
   try{
-    const data=await callClaude(buildPrompt(state.tab,t),false);
+    const data=await callClaude(buildPrompt(state.tab,t),false,true);
     const parsed=parseJSON(data);
     state.cache[key]=parsed;
     if(state.tab===state.tab) render(parsed); // guard
