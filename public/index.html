@@ -266,7 +266,7 @@
     </div>
   </main>
 
-  <footer class="wrap">Current scans live results for ideation. Verify facts and figures before publishing.</footer>
+  <footer class="wrap">Current scans live results for ideation. Verify facts and figures before publishing. · build v3</footer>
 
 <script>
 const API="/api/generate";
@@ -302,6 +302,31 @@ async function callClaude(prompt,useSearch){
   if(d&&d.error)throw new Error(d.error);
   return (d&&d.text)||"";
 }
+function sanitizeJSON(t){
+  // Escape raw control characters that appear INSIDE string values, which
+  // Gemini sometimes emits (literal newlines/tabs) and which break JSON.parse.
+  let out="",inStr=false,esc=false;
+  for(let i=0;i<t.length;i++){
+    const c=t[i],code=t.charCodeAt(i);
+    if(inStr){
+      if(esc){out+=c;esc=false;continue;}
+      if(c==="\\"){out+=c;esc=true;continue;}
+      if(c==='"'){out+=c;inStr=false;continue;}
+      if(code<0x20){
+        if(c==="\n")out+="\\n";
+        else if(c==="\r")out+="\\r";
+        else if(c==="\t")out+="\\t";
+        else out+="\\u"+code.toString(16).padStart(4,"0");
+        continue;
+      }
+      out+=c;
+    }else{
+      if(c==='"'){inStr=true;}
+      out+=c;
+    }
+  }
+  return out;
+}
 function parseJSON(text){
   let t=text.replace(/```json/gi,"").replace(/```/g,"").trim();
   const a=t.indexOf("["),o=t.indexOf("{");
@@ -309,7 +334,8 @@ function parseJSON(text){
   if(a!==-1&&(o===-1||a<o)){s=a;e=t.lastIndexOf("]");}
   else if(o!==-1){s=o;e=t.lastIndexOf("}");}
   if(s!==-1&&e!==-1)t=t.slice(s,e+1);
-  return JSON.parse(t);
+  try{return JSON.parse(sanitizeJSON(t));}
+  catch(_){return JSON.parse(t.replace(/[\u0000-\u001F]+/g," "));}
 }
 function loader(target,sub){
   const i=Math.floor(Math.random()*LOAD_MSGS.length);
