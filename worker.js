@@ -16,6 +16,7 @@ export default {
         // Health check — open /api/generate in a browser to see this.
         return json({
           status: "worker is deployed and running",
+          worker_build: "v6",
           gemini_key_present: !!env.GEMINI_API_KEY,
           model: MODEL,
           next_step: env.GEMINI_API_KEY
@@ -65,23 +66,33 @@ async function callGemini(key, prompt, useSearch, wantJson) {
               MODEL + ":generateContent?key=" + key;
   const body = {
     contents: [{ role: "user", parts: [{ text: prompt }] }],
-    generationConfig: { temperature: 0.9, maxOutputTokens: 1500 }
+    generationConfig: { temperature: 0.9, maxOutputTokens: 2048 }
   };
   if (useSearch) body.tools = [{ google_search: {} }];
   if (wantJson) body.generationConfig.responseMimeType = "application/json";
 
-  const r = await fetch(url, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(body)
-  });
-  if (!r.ok) {
+  let lastErr;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const r = await fetch(url, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body)
+    });
+    if (r.ok) {
+      const d = await r.json();
+      const parts = (((d.candidates || [])[0] || {}).content || {}).parts || [];
+      return parts.map((p) => p.text || "").join("");
+    }
     const t = await r.text();
-    throw new Error("Gemini " + r.status + ": " + t.slice(0, 200));
+    lastErr = new Error("Gemini " + r.status + ": " + t.slice(0, 200));
+    // Retry transient overload / rate spikes; fail fast on everything else.
+    if (r.status === 503 || r.status === 429) {
+      await new Promise((res) => setTimeout(res, 1200 * (attempt + 1)));
+      continue;
+    }
+    throw lastErr;
   }
-  const d = await r.json();
-  const parts = (((d.candidates || [])[0] || {}).content || {}).parts || [];
-  return parts.map((p) => p.text || "").join("");
+  throw lastErr || new Error("Gemini unavailable after retries");
 }
 
 function json(obj, status) {
