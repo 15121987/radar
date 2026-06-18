@@ -184,6 +184,8 @@
   .slide p{color:var(--muted);font-size:14px;line-height:1.5}
 
   .post{white-space:pre-wrap;font-size:15.5px;line-height:1.65;color:var(--text)}
+  .compliance{display:none;margin:0 0 18px;padding:11px 14px;border-radius:10px;background:rgba(201,162,75,.10);border:1px solid var(--gold-line);color:var(--muted);font-size:13px;line-height:1.5}
+  .compliance b{color:var(--gold)}
   .nl-subject{font-family:"Cormorant Garamond",serif;font-size:24px;font-weight:600;line-height:1.2;color:var(--text);margin-bottom:6px}
   .nl-preview{color:var(--muted);font-size:14px;font-style:italic;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border-soft)}
   .nl-sec{margin-bottom:20px}
@@ -238,7 +240,7 @@
     <!-- HERO / INPUT -->
     <div class="hero" id="hero">
       <h1>Catch what's trending.<br>Turn it into <em>content</em>.</h1>
-      <p>Paste a link or type a niche. Current reads the live web and hands you reels, carousels, and LinkedIn posts ready to publish.</p>
+      <p>Paste a link or type any niche. Current reads the live web and hands you reels, carousels, LinkedIn posts, and newsletters ready to publish.</p>
       <div class="bar">
         <input id="q" type="text" placeholder="https://example.com  ·  or  ·  personal finance for millennials"
                autocomplete="off" spellcheck="false" aria-label="Link or topic" />
@@ -269,15 +271,16 @@
         <button class="tab" data-tab="linkedin">LinkedIn</button>
         <button class="tab" data-tab="newsletter">Newsletter</button>
       </div>
+      <div class="compliance" id="compliance"><b>Finance topic.</b> Drafts include general guardrails, but review for SEBI / regulatory compliance before publishing.</div>
       <div class="panel" id="panel"></div>
     </div>
   </main>
 
-  <footer class="wrap">Current scans live results for ideation. Verify facts and figures before publishing. · build v9</footer>
+  <footer class="wrap">Current scans live results for ideation. Verify facts and figures before publishing. · build v11</footer>
 
 <script>
 const API="/api/generate";
-const EXAMPLES=["Personal finance India","SaaS sales","Mutual funds & SIPs","Creator economy","AI for marketers"];
+const EXAMPLES=["Personal finance","Fitness & wellness","Travel","Tech & AI","Food & cooking","Sustainable fashion"];
 const LOAD_MSGS=["Reading the room…","Scanning live results…","Spotting what's rising…","Sorting signal from noise…"];
 
 const state={input:"",topics:[],sel:null,tab:"reel",cache:{}};
@@ -397,6 +400,7 @@ TITLE: a specific, punchy idea
 ANGLE: one sentence on why it matters now
 AUDIENCE: who it is for
 TAG: one of Global, Instagram, or Evergreen
+If any idea relates to finance or investing, keep it educational \u2014 do not frame ideas around guaranteed returns or specific stock tips.
 Remember: six complete ideas, each with all four lines, separated by ---.`;
     const txt=await callClaude(formatPrompt,false,false);
     const topics=parseTopics(txt);
@@ -427,6 +431,10 @@ function renderTopics(){
   const body=$("results-body");body.innerHTML="";body.appendChild(grid);
 }
 
+function isFinanceTopic(t){
+  const s=((t.title||"")+" "+(t.angle||"")+" "+(t.tag||"")).toLowerCase();
+  return /\b(invest|investing|investment|investor|stock|stocks|share market|mutual fund|sip|sips|equity|equities|portfolio|trading|trader|crypto|bitcoin|sebi|nifty|sensex|finance|financial|returns|nps|\bfund\b|funds|bond|bonds|insurance|wealth|\btax\b|loan|emi|forex|retirement|pension)\b/.test(s);
+}
 function openTopic(i){
   state.sel=i;state.tab="reel";
   const t=state.topics[i];
@@ -436,6 +444,7 @@ function openTopic(i){
   $("w-title").textContent=t.title;
   $("w-angle").textContent=t.angle;
   $("w-aud").textContent="For "+(t.audience||"a broad audience");
+  $("compliance").style.display=isFinanceTopic(t)?"block":"none";
   document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x.dataset.tab==="reel"));
   window.scrollTo({top:0,behavior:"smooth"});
   loadTab();
@@ -462,7 +471,8 @@ async function loadTab(){
 }
 
 function buildPrompt(tab,t){
-  const base=`Topic: "${t.title}". Angle: ${t.angle}. Audience: ${t.audience}.`;
+  const base=`Topic: "${t.title}". Angle: ${t.angle}. Audience: ${t.audience}.
+COMPLIANCE: If this topic relates to investing, securities, trading, mutual funds, or financial products, follow responsible-finance rules \u2014 do not promise or imply assured/guaranteed returns, do not give specific buy/sell/hold tips as personal advice, keep it educational, include a brief risk note (e.g. investments are subject to market risks), and suggest consulting a licensed financial advisor (in India, a SEBI-registered advisor). If the topic is unrelated to finance, ignore this paragraph.`;
   if(tab==="reel")return `${base}
 Write a punchy short-form video reel (~30-45s). Respond with ONLY JSON, no markdown:
 {"hook":"scroll-stopping opening line","beats":[{"time":"0-3s","voiceover":"what's said","visual":"what's shown"}],"caption":"post caption","hashtags":["tag"]}
