@@ -184,6 +184,12 @@
   .slide p{color:var(--muted);font-size:14px;line-height:1.5}
 
   .post{white-space:pre-wrap;font-size:15.5px;line-height:1.65;color:var(--text)}
+  .nl-subject{font-family:"Cormorant Garamond",serif;font-size:24px;font-weight:600;line-height:1.2;color:var(--text);margin-bottom:6px}
+  .nl-preview{color:var(--muted);font-size:14px;font-style:italic;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border-soft)}
+  .nl-sec{margin-bottom:20px}
+  .nl-sec h4{font-size:16px;font-weight:600;color:var(--text);margin-bottom:7px}
+  .nl-sec p{color:var(--muted);font-size:15px;line-height:1.65}
+  .nl-cta{margin-top:6px;padding:14px 16px;background:var(--gold-soft);border:1px solid var(--gold-line);border-radius:10px;color:var(--text);font-size:14.5px;line-height:1.5}
 
   .meta{margin-top:22px;padding-top:18px;border-top:1px solid var(--border-soft)}
   .meta .caption{color:var(--text);font-size:14.5px;line-height:1.55}
@@ -261,12 +267,13 @@
         <button class="tab active" data-tab="reel">Reel</button>
         <button class="tab" data-tab="carousel">Carousel</button>
         <button class="tab" data-tab="linkedin">LinkedIn</button>
+        <button class="tab" data-tab="newsletter">Newsletter</button>
       </div>
       <div class="panel" id="panel"></div>
     </div>
   </main>
 
-  <footer class="wrap">Current scans live results for ideation. Verify facts and figures before publishing. · build v8</footer>
+  <footer class="wrap">Current scans live results for ideation. Verify facts and figures before publishing. · build v9</footer>
 
 <script>
 const API="/api/generate";
@@ -464,9 +471,13 @@ Use 4-5 beats.`;
 Write an Instagram/LinkedIn carousel. Respond with ONLY JSON, no markdown:
 {"slides":[{"heading":"slide heading","body":"concise slide text"}],"caption":"post caption","hashtags":["tag"]}
 Use 5-6 slides: slide 1 is a hook cover, last is a clear call to action.`;
-  return `${base}
+  if(tab==="linkedin")return `${base}
 Write a LinkedIn post. Respond with ONLY JSON, no markdown:
 {"post":"full post with \\n line breaks, strong first line, value in the middle, a question to close","hashtags":["tag"]}`;
+  return `${base}
+Write an in-depth email newsletter of about 600-700 words in the audience's voice. Respond with ONLY JSON, no markdown:
+{"subject":"a compelling subject line","preview":"one-line preview/preheader text","sections":[{"heading":"section subheading","body":"two to three substantial paragraphs of valuable content"}],"cta":"a clear closing call to action"}
+Use 3 or 4 sections. Make it genuinely useful and specific, not fluffy.`;
 }
 
 function tags(arr){return (arr||[]).map(h=>`<span class="tag">${esc(h.replace(/^#/,"#").startsWith("#")?h:"#"+h)}</span>`).join("");}
@@ -484,12 +495,20 @@ function render(d){
       `<div class="slide"><div class="sn">${i+1}</div><div><h4>${esc(s.heading)}</h4><p>${esc(s.body)}</p></div></div>`).join("");
     inner=`${slides}<div class="meta"><div class="caption">${esc(d.caption)}</div><div class="tags">${tags(d.hashtags)}</div></div>`;
     plain=(d.slides||[]).map((s,i)=>`SLIDE ${i+1}: ${s.heading}\n${s.body}`).join("\n\n")+`\n\nCaption: ${d.caption}\n\n${(d.hashtags||[]).map(h=>h.startsWith("#")?h:"#"+h).join(" ")}`;
-  }else{
+  }else if(state.tab==="linkedin"){
     inner=`<div class="post">${esc(d.post).replace(/\n/g,"<br>")}</div>
       <div class="meta"><div class="tags">${tags(d.hashtags)}</div></div>`;
     plain=`${d.post}\n\n${(d.hashtags||[]).map(h=>h.startsWith("#")?h:"#"+h).join(" ")}`;
+  }else{
+    const sections=(d.sections||[]).map(s=>
+      `<div class="nl-sec"><h4>${esc(s.heading)}</h4><p>${esc(s.body).replace(/\n/g,"<br>")}</p></div>`).join("");
+    inner=`<div class="nl-subject">${esc(d.subject)}</div>
+      <div class="nl-preview">${esc(d.preview)}</div>
+      ${sections}
+      <div class="nl-cta">${esc(d.cta)}</div>`;
+    plain=`Subject: ${d.subject}\nPreview: ${d.preview}\n\n`+(d.sections||[]).map(s=>`${(s.heading||"").toUpperCase()}\n${s.body}`).join("\n\n")+`\n\n${d.cta}`;
   }
-  const label={reel:"Reel script",carousel:"Carousel",linkedin:"LinkedIn post"}[state.tab];
+  const label={reel:"Reel script",carousel:"Carousel",linkedin:"LinkedIn post",newsletter:"Newsletter"}[state.tab];
   $("panel").innerHTML=`<div class="card">
     <div class="card-top"><span class="label">${label}</span>
       <button class="copy" id="copyBtn">Copy</button></div>${inner}</div>`;
