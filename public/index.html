@@ -276,7 +276,7 @@
     </div>
   </main>
 
-  <footer class="wrap">Current scans live results for ideation. Verify facts and figures before publishing. · build v11</footer>
+  <footer class="wrap">Current scans live results for ideation. Verify facts and figures before publishing. · build v12</footer>
 
 <script>
 const API="/api/generate";
@@ -461,8 +461,8 @@ async function loadTab(){
   loader($("panel"),"Drafting your "+state.tab+"…");
   const t=state.topics[state.sel];
   try{
-    const data=await callClaude(buildPrompt(state.tab,t),false,true);
-    const parsed=parseJSON(data);
+    const data=await callClaude(buildPrompt(state.tab,t),false,state.tab!=="newsletter");
+    const parsed=state.tab==="newsletter"?parseNewsletter(data):parseJSON(data);
     state.cache[key]=parsed;
     if(state.tab===state.tab) render(parsed); // guard
   }catch(err){
@@ -485,12 +485,38 @@ Use 5-6 slides: slide 1 is a hook cover, last is a clear call to action.`;
 Write a LinkedIn post. Respond with ONLY JSON, no markdown:
 {"post":"full post with \\n line breaks, strong first line, value in the middle, a question to close","hashtags":["tag"]}`;
   return `${base}
-Write an in-depth email newsletter of about 600-700 words in the audience's voice. Respond with ONLY JSON, no markdown:
-{"subject":"a compelling subject line","preview":"one-line preview/preheader text","sections":[{"heading":"section subheading","body":"two to three substantial paragraphs of valuable content"}],"cta":"a clear closing call to action"}
-Use 3 or 4 sections. Make it genuinely useful and specific, not fluffy.`;
+Write an in-depth email newsletter of about 600-700 words in the audience's voice.
+Output PLAIN TEXT only \u2014 no JSON, no markdown symbols, no asterisks. Use EXACTLY these labels:
+SUBJECT: the subject line
+PREVIEW: a one-line preview/preheader
+---
+HEADING: a section subheading
+BODY: two to three substantial paragraphs
+---
+HEADING: next section subheading
+BODY: two to three substantial paragraphs
+---
+CTA: a clear closing call to action
+Use 3 or 4 HEADING/BODY sections, each separated by a line containing only ---. Make it genuinely useful and specific.`;
 }
 
 function tags(arr){return (arr||[]).map(h=>`<span class="tag">${esc(h.replace(/^#/,"#").startsWith("#")?h:"#"+h)}</span>`).join("");}
+
+function parseNewsletter(text){
+  const t=text.replace(/```/g,"").trim();
+  const grab=(label)=>{const m=t.match(new RegExp("(?:^|\\n)\\s*"+label+"\\s*:\\s*([^\\n]*)","i"));return m?m[1].trim():"";};
+  const subject=grab("SUBJECT");
+  const preview=grab("PREVIEW");
+  const cta=grab("CTA");
+  const sections=[];
+  const re=/(?:^|\n)\s*HEADING\s*:\s*([^\n]*)\n([\s\S]*?)(?=\n\s*(?:HEADING|CTA)\s*:|\s*$)/gi;
+  let m;
+  while((m=re.exec(t))!==null){
+    const body=m[2].replace(/^\s*BODY\s*:\s*/i,"").replace(/\n?-{2,}\s*/g,"\n").trim();
+    if(m[1].trim()||body)sections.push({heading:m[1].trim(),body});
+  }
+  return {subject,preview,cta,sections};
+}
 
 function render(d){
   let inner="",plain="";
