@@ -38,9 +38,21 @@
     font-size:16px;
     line-height:1.5;
     -webkit-font-smoothing:antialiased;
-    background-image:radial-gradient(1200px 600px at 50% -10%, rgba(201,162,75,.06), transparent 70%);
+    background-image:radial-gradient(1200px 600px at 50% -12%, rgba(201,162,75,.05), transparent 70%);
   }
-  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px}
+  /* faint living glow behind the hero */
+  body::before{
+    content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+    background:
+      radial-gradient(560px 380px at 32% 10%, rgba(201,162,75,.13), transparent 60%),
+      radial-gradient(520px 360px at 70% 4%, rgba(201,162,75,.07), transparent 62%);
+    animation:auroraDrift 17s ease-in-out infinite alternate;
+  }
+  @keyframes auroraDrift{
+    0%{transform:translate3d(-2.5%,-1.5%,0) scale(1);opacity:.85}
+    100%{transform:translate3d(2.5%,1.5%,0) scale(1.08);opacity:1}
+  }
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px;position:relative}
   ::selection{background:var(--gold-soft)}
 
   /* ---------- header ---------- */
@@ -117,12 +129,12 @@
   .topic{
     text-align:left;background:var(--surface);border:1px solid var(--border-soft);
     border-radius:var(--radius);padding:20px 20px 18px;cursor:pointer;
-    transition:border-color .2s, transform .2s, background .2s;
-    opacity:0;transform:translateY(10px);
+    transition:border-color .3s ease, transform .35s cubic-bezier(.22,.61,.36,1), background .3s ease, box-shadow .35s ease;
+    opacity:0;transform:translateY(16px);
   }
-  .topic.in{animation:rise .55s cubic-bezier(.2,.8,.2,1) forwards}
+  .topic.in{animation:rise .7s cubic-bezier(.22,.61,.36,1) forwards}
   @keyframes rise{to{opacity:1;transform:none}}
-  .topic:hover{border-color:var(--gold-line);background:var(--surface-2)}
+  .topic:hover{border-color:var(--gold-line);background:var(--surface-2);transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,.30),0 0 0 1px var(--gold-line) inset}
   .topic .num{font-size:12px;color:var(--gold);letter-spacing:.15em;font-weight:600}
   .topic-top{display:flex;align-items:center;gap:10px}
   .ttag{font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:var(--gold);border:1px solid var(--gold-line);border-radius:999px;padding:3px 9px;background:var(--gold-soft)}
@@ -156,9 +168,10 @@
   .panel{min-height:200px}
   .card{
     background:var(--surface);border:1px solid var(--border-soft);border-radius:var(--radius);
-    padding:24px;animation:fade .4s ease;
+    padding:24px;animation:fade .5s cubic-bezier(.22,.61,.36,1);
+    box-shadow:0 14px 40px rgba(0,0,0,.22),0 0 0 1px rgba(201,162,75,.05) inset;
   }
-  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
   .card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:12px}
   .card-top .label{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint)}
   .copy{
@@ -229,6 +242,18 @@
   /* ---------- states ---------- */
   .loading{display:flex;flex-direction:column;align-items:center;gap:18px;padding:60px 0;color:var(--muted)}
   .spinner{width:34px;height:34px;border:2.5px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite}
+  .radar{position:relative;width:128px;height:128px;margin:6px auto}
+  .radar-rings{position:absolute;inset:0;border-radius:50%;opacity:.55;
+    background:
+      radial-gradient(circle, transparent 0 16%, var(--gold-line) 16% 16.7%, transparent 16.7%),
+      radial-gradient(circle, transparent 0 36%, var(--gold-line) 36% 36.7%, transparent 36.7%),
+      radial-gradient(circle, transparent 0 56%, var(--gold-line) 56% 56.7%, transparent 56.7%),
+      radial-gradient(circle, transparent 0 76%, var(--gold-line) 76% 76.7%, transparent 76.7%)}
+  .radar-sweep{position:absolute;inset:0;border-radius:50%;overflow:hidden;
+    background:conic-gradient(from 0deg, rgba(201,162,75,.5), rgba(201,162,75,.05) 50deg, transparent 90deg);
+    animation:radarSweep 1.9s linear infinite}
+  .radar-dot{position:absolute;top:50%;left:50%;width:7px;height:7px;border-radius:50%;background:var(--gold);transform:translate(-50%,-50%);box-shadow:0 0 12px rgba(201,162,75,.85)}
+  @keyframes radarSweep{to{transform:rotate(360deg)}}
   @keyframes spin{to{transform:rotate(360deg)}}
   .loading .msg{font-size:14.5px}
   .loading .sub{font-size:12.5px;color:var(--faint)}
@@ -304,7 +329,7 @@
     </div>
   </main>
 
-  <footer class="wrap">Current scans live results for ideation. Verify facts and figures before publishing. · build v13</footer>
+  <footer class="wrap">Current scans live results for ideation. Verify facts and figures before publishing. · build v14</footer>
 
 <script>
 const API="/api/generate";
@@ -404,6 +429,10 @@ function loader(target,sub){
   const i=Math.floor(Math.random()*LOAD_MSGS.length);
   target.innerHTML=`<div class="loading"><div class="spinner"></div><div class="msg">${LOAD_MSGS[i]}</div><div class="sub">${sub||""}</div></div>`;
 }
+function radarLoader(target,sub){
+  const i=Math.floor(Math.random()*LOAD_MSGS.length);
+  target.innerHTML=`<div class="loading"><div class="radar"><div class="radar-rings"></div><div class="radar-sweep"></div><div class="radar-dot"></div></div><div class="msg">${LOAD_MSGS[i]}</div><div class="sub">${sub||""}</div></div>`;
+}
 function errorBox(target,msg){
   target.innerHTML=`<div class="error"><b>That didn't go through.</b><span>${esc(msg)}</span></div>`;
 }
@@ -419,7 +448,7 @@ async function findTrends(isRefresh){
   $("results-title").textContent="Trending now";
   if(isRefresh){rb.disabled=true;rb.classList.add("spinning");}
   else{$("results-sub").textContent="";rb.style.display="none";}
-  loader($("results-body"),isRefresh?"Finding fresh angles you haven't seen\u2026":"This searches the live web \u2014 a few seconds.");
+  radarLoader($("results-body"),isRefresh?"Finding fresh angles you haven't seen\u2026":"This searches the live web \u2014 a few seconds.");
   if(!isRefresh)window.scrollTo({top:300,behavior:"smooth"});
   const seen=isRefresh?state.topics.map(t=>t.title):[];
   try{
