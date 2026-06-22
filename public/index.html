@@ -186,6 +186,34 @@
   .post{white-space:pre-wrap;font-size:15.5px;line-height:1.65;color:var(--text)}
   .compliance{display:none;margin:0 0 18px;padding:11px 14px;border-radius:10px;background:rgba(201,162,75,.10);border:1px solid var(--gold-line);color:var(--muted);font-size:13px;line-height:1.5}
   .compliance b{color:var(--gold)}
+  .card-actions{display:flex;align-items:center;gap:12px}
+  .vernav{display:flex;align-items:center;gap:6px}
+  .vbtn{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:7px;width:27px;height:27px;cursor:pointer;font-size:15px;line-height:1;font-family:inherit}
+  .vbtn:hover:not(:disabled){border-color:var(--gold-line);color:var(--text)}
+  .vbtn:disabled{opacity:.4;cursor:default}
+  .vlbl{font-size:12px;color:var(--faint);font-variant-numeric:tabular-nums}
+  .refine{margin-top:22px;padding-top:18px;border-top:1px solid var(--border-soft)}
+  .refine-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  .rchip{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:999px;padding:6px 13px;font-size:12.5px;cursor:pointer;font-family:inherit;transition:all .2s}
+  .rchip:hover{border-color:var(--gold-line);color:var(--text);background:var(--gold-soft)}
+  .refine-box{display:flex;gap:8px}
+  .refine-box input{flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text);font-family:inherit;font-size:14px;outline:none}
+  .refine-box input:focus{border-color:var(--gold-line)}
+  .btn-sm{background:var(--gold);color:#1a1509;border:0;border-radius:9px;padding:10px 16px;font-family:inherit;font-weight:600;font-size:13.5px;cursor:pointer;white-space:nowrap}
+  .btn-sm:hover{background:var(--gold-bright)}
+  .refine-q{margin-top:14px}
+  .rq-loading{font-size:13px;color:var(--muted);padding:8px 0}
+  .rq-err{font-size:13px;color:#d99;padding:8px 0}
+  .rq-title{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:12px}
+  .rq{margin-bottom:16px}
+  .rq-text{font-size:14px;color:var(--text);margin-bottom:8px}
+  .rq-opts{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:8px}
+  .rq-opt{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;font-family:inherit;transition:all .2s}
+  .rq-opt:hover{border-color:var(--gold-line);color:var(--text)}
+  .rq-opt.sel{background:var(--gold-soft);border-color:var(--gold);color:var(--gold)}
+  .rq-other{width:100%;max-width:280px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-family:inherit;font-size:13px;outline:none}
+  .rq-other:focus{border-color:var(--gold-line)}
+  .rq-apply{margin-top:6px}
   .nl-subject{font-family:"Cormorant Garamond",serif;font-size:24px;font-weight:600;line-height:1.2;color:var(--text);margin-bottom:6px}
   .nl-preview{color:var(--muted);font-size:14px;font-style:italic;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border-soft)}
   .nl-sec{margin-bottom:20px}
@@ -276,12 +304,19 @@
     </div>
   </main>
 
-  <footer class="wrap">Current scans live results for ideation. Verify facts and figures before publishing. · build v12</footer>
+  <footer class="wrap">Current scans live results for ideation. Verify facts and figures before publishing. · build v13</footer>
 
 <script>
 const API="/api/generate";
 const EXAMPLES=["Personal finance","Fitness & wellness","Travel","Tech & AI","Food & cooking","Sustainable fashion"];
 const LOAD_MSGS=["Reading the room…","Scanning live results…","Spotting what's rising…","Sorting signal from noise…"];
+const REFINE_CHIPS=[
+  {label:"Punchier",instr:"Make it punchier and more attention-grabbing"},
+  {label:"Shorter",instr:"Make it shorter and tighter"},
+  {label:"More casual",instr:"Make it more casual and conversational"},
+  {label:"Add data",instr:"Add a relevant statistic or concrete data point"},
+  {label:"More detail",instr:"Add more depth and detail"}
+];
 
 const state={input:"",topics:[],sel:null,tab:"reel",cache:{}};
 const $=id=>document.getElementById(id);
@@ -455,19 +490,24 @@ function setTab(tab){
   loadTab();
 }
 
+function curKey(){return state.sel+"-"+state.tab;}
 async function loadTab(){
-  const key=state.sel+"-"+state.tab;
-  if(state.cache[key]){render(state.cache[key]);return;}
+  const key=curKey();
+  if(state.cache[key]){renderEntry(key);return;}
   loader($("panel"),"Drafting your "+state.tab+"…");
   const t=state.topics[state.sel];
   try{
     const data=await callClaude(buildPrompt(state.tab,t),false,state.tab!=="newsletter");
     const parsed=state.tab==="newsletter"?parseNewsletter(data):parseJSON(data);
-    state.cache[key]=parsed;
-    if(state.tab===state.tab) render(parsed); // guard
+    state.cache[key]={versions:[parsed],idx:0};
+    renderEntry(key);
   }catch(err){
     errorBox($("panel"),"Couldn't draft this. Technical detail: "+(err&&err.message?err.message:String(err)));
   }
+}
+function renderEntry(key){
+  const e=state.cache[key];
+  render(e.versions[e.idx],e);
 }
 
 function buildPrompt(tab,t){
@@ -518,23 +558,20 @@ function parseNewsletter(text){
   return {subject,preview,cta,sections};
 }
 
-function render(d){
-  let inner="",plain="";
+function render(d,e){
+  let inner="";
   if(state.tab==="reel"){
     const beats=(d.beats||[]).map(b=>
       `<div class="beat"><div class="t">${esc(b.time)}</div><div><div class="vo">${esc(b.voiceover)}</div><div class="vis">Visual: ${esc(b.visual)}</div></div></div>`).join("");
     inner=`<div class="hook">${esc(d.hook)}</div>${beats}
       <div class="meta"><div class="caption">${esc(d.caption)}</div><div class="tags">${tags(d.hashtags)}</div></div>`;
-    plain=`HOOK: ${d.hook}\n\n`+(d.beats||[]).map(b=>`[${b.time}] ${b.voiceover}\n  (Visual: ${b.visual})`).join("\n")+`\n\nCaption: ${d.caption}\n\n${(d.hashtags||[]).map(h=>h.startsWith("#")?h:"#"+h).join(" ")}`;
   }else if(state.tab==="carousel"){
     const slides=(d.slides||[]).map((s,i)=>
       `<div class="slide"><div class="sn">${i+1}</div><div><h4>${esc(s.heading)}</h4><p>${esc(s.body)}</p></div></div>`).join("");
     inner=`${slides}<div class="meta"><div class="caption">${esc(d.caption)}</div><div class="tags">${tags(d.hashtags)}</div></div>`;
-    plain=(d.slides||[]).map((s,i)=>`SLIDE ${i+1}: ${s.heading}\n${s.body}`).join("\n\n")+`\n\nCaption: ${d.caption}\n\n${(d.hashtags||[]).map(h=>h.startsWith("#")?h:"#"+h).join(" ")}`;
   }else if(state.tab==="linkedin"){
     inner=`<div class="post">${esc(d.post).replace(/\n/g,"<br>")}</div>
       <div class="meta"><div class="tags">${tags(d.hashtags)}</div></div>`;
-    plain=`${d.post}\n\n${(d.hashtags||[]).map(h=>h.startsWith("#")?h:"#"+h).join(" ")}`;
   }else{
     const sections=(d.sections||[]).map(s=>
       `<div class="nl-sec"><h4>${esc(s.heading)}</h4><p>${esc(s.body).replace(/\n/g,"<br>")}</p></div>`).join("");
@@ -542,13 +579,113 @@ function render(d){
       <div class="nl-preview">${esc(d.preview)}</div>
       ${sections}
       <div class="nl-cta">${esc(d.cta)}</div>`;
-    plain=`Subject: ${d.subject}\nPreview: ${d.preview}\n\n`+(d.sections||[]).map(s=>`${(s.heading||"").toUpperCase()}\n${s.body}`).join("\n\n")+`\n\n${d.cta}`;
   }
+  const plain=serialize(state.tab,d);
   const label={reel:"Reel script",carousel:"Carousel",linkedin:"LinkedIn post",newsletter:"Newsletter"}[state.tab];
+  let vnav="";
+  if(e&&e.versions.length>1){
+    vnav=`<div class="vernav">
+      <button class="vbtn" id="vPrev" ${e.idx===0?"disabled":""}>\u2039</button>
+      <span class="vlbl">v${e.idx+1}/${e.versions.length}</span>
+      <button class="vbtn" id="vNext" ${e.idx===e.versions.length-1?"disabled":""}>\u203a</button>
+    </div>`;
+  }
+  const refineUI=`<div class="refine">
+    <div class="refine-chips">${REFINE_CHIPS.map(c=>`<button class="rchip" data-instr="${esc(c.instr)}">${esc(c.label)}</button>`).join("")}</div>
+    <div class="refine-box"><input id="refineInput" type="text" placeholder="Or describe how to improve it\u2026" /><button class="btn-sm" id="refineGo">Refine</button></div>
+    <div class="refine-q" id="refineQ"></div>
+  </div>`;
   $("panel").innerHTML=`<div class="card">
     <div class="card-top"><span class="label">${label}</span>
-      <button class="copy" id="copyBtn">Copy</button></div>${inner}</div>`;
+      <div class="card-actions">${vnav}<button class="copy" id="copyBtn">Copy</button></div></div>
+    ${inner}${refineUI}</div>`;
   $("copyBtn").onclick=function(){copyText(plain,this);};
+  if(e&&e.versions.length>1){
+    const p=$("vPrev"),n=$("vNext");
+    if(p)p.onclick=()=>{e.idx=Math.max(0,e.idx-1);renderEntry(curKey());};
+    if(n)n.onclick=()=>{e.idx=Math.min(e.versions.length-1,e.idx+1);renderEntry(curKey());};
+  }
+  document.querySelectorAll(".rchip").forEach(b=>b.onclick=()=>regenerate(b.dataset.instr));
+  $("refineGo").onclick=refineFree;
+  $("refineInput").addEventListener("keydown",ev=>{if(ev.key==="Enter")refineFree();});
+}
+
+function serialize(tab,d){
+  if(tab==="reel")return `HOOK: ${d.hook}\n\n`+(d.beats||[]).map(b=>`[${b.time}] ${b.voiceover}\n  (Visual: ${b.visual})`).join("\n")+`\n\nCaption: ${d.caption}\n\n${(d.hashtags||[]).map(h=>h.startsWith("#")?h:"#"+h).join(" ")}`;
+  if(tab==="carousel")return (d.slides||[]).map((s,i)=>`SLIDE ${i+1}: ${s.heading}\n${s.body}`).join("\n\n")+`\n\nCaption: ${d.caption}\n\n${(d.hashtags||[]).map(h=>h.startsWith("#")?h:"#"+h).join(" ")}`;
+  if(tab==="linkedin")return `${d.post}\n\n${(d.hashtags||[]).map(h=>h.startsWith("#")?h:"#"+h).join(" ")}`;
+  return `Subject: ${d.subject}\nPreview: ${d.preview}\n\n`+(d.sections||[]).map(s=>`${(s.heading||"").toUpperCase()}\n${s.body}`).join("\n\n")+`\n\n${d.cta}`;
+}
+
+function refineFree(){
+  const fb=($("refineInput").value||"").trim();
+  if(!fb)return;
+  $("refineQ").innerHTML=`<div class="rq-loading">Thinking of a couple of quick questions\u2026</div>`;
+  callClaude(`A user gave this feedback on a ${state.tab} draft: "${fb}".
+Ask 2 or 3 SHORT clarifying questions to pin down exactly what they want changed. For each, give 2 to 4 short tap-friendly options.
+Output PLAIN TEXT only, no JSON. Separate questions with a line of only ---. Format:
+Q: the question
+OPTIONS: option one | option two | option three`,false,false)
+  .then(out=>{
+    const qs=parseQuestions(out);
+    if(!qs.length){regenerate(fb);return;}
+    renderQuestions(fb,qs);
+  })
+  .catch(()=>regenerate(fb));
+}
+
+function parseQuestions(text){
+  const blocks=text.split(/^\s*-{2,}\s*$/m).map(b=>b.trim()).filter(Boolean);
+  const qs=[];
+  for(const b of blocks){
+    const qm=b.match(/(?:^|\n)\s*Q\s*:\s*([^\n]*)/i);
+    const om=b.match(/(?:^|\n)\s*OPTIONS\s*:\s*([^\n]*)/i);
+    if(qm&&qm[1].trim())qs.push({q:qm[1].trim(),opts:om?om[1].split("|").map(s=>s.trim()).filter(Boolean):[]});
+  }
+  return qs;
+}
+
+function renderQuestions(fb,qs){
+  const answers={};
+  const qbox=$("refineQ");
+  qbox.innerHTML=`<div class="rq-title">Quick questions to nail it</div>`+qs.map((q,i)=>`<div class="rq">
+    <div class="rq-text">${esc(q.q)}</div>
+    <div class="rq-opts">${q.opts.map(o=>`<button class="rq-opt" data-q="${i}" data-val="${esc(o)}">${esc(o)}</button>`).join("")}</div>
+    <input class="rq-other" data-q="${i}" placeholder="Other\u2026" />
+  </div>`).join("")+`<button class="btn-sm rq-apply" id="rqApply">Apply &amp; refine</button>`;
+  qbox.querySelectorAll(".rq-opt").forEach(b=>b.onclick=()=>{
+    const qi=b.dataset.q;
+    qbox.querySelectorAll('.rq-opt[data-q="'+qi+'"]').forEach(x=>x.classList.remove("sel"));
+    b.classList.add("sel");answers[qi]=b.dataset.val;
+    const o=qbox.querySelector('.rq-other[data-q="'+qi+'"]');if(o)o.value="";
+  });
+  qbox.querySelectorAll(".rq-other").forEach(inp=>inp.addEventListener("input",()=>{
+    const qi=inp.dataset.q;
+    if(inp.value.trim()){answers[qi]=inp.value.trim();qbox.querySelectorAll('.rq-opt[data-q="'+qi+'"]').forEach(x=>x.classList.remove("sel"));}
+  }));
+  $("rqApply").onclick=()=>{
+    const clar=qs.map((q,i)=>answers[i]?`${q.q} -> ${answers[i]}`:null).filter(Boolean).join("; ");
+    regenerate(fb+(clar?` (Clarifications: ${clar})`:""));
+  };
+}
+
+async function regenerate(feedback){
+  const key=curKey();
+  const e=state.cache[key];
+  if(!e)return;
+  const t=state.topics[state.sel];
+  const curText=serialize(state.tab,e.versions[e.idx]);
+  loader($("panel"),"Refining your "+state.tab+"…");
+  try{
+    const prompt=buildPrompt(state.tab,t)+`\n\nHere is the current draft:\n${curText}\n\nRevise this draft based on the following feedback: ${feedback}\nReturn the revised version in the SAME format described above, keeping what already works.`;
+    const data=await callClaude(prompt,false,state.tab!=="newsletter");
+    const parsed=state.tab==="newsletter"?parseNewsletter(data):parseJSON(data);
+    e.versions.push(parsed);e.idx=e.versions.length-1;
+    renderEntry(key);
+  }catch(err){
+    renderEntry(key);
+    const qbox=$("refineQ");if(qbox)qbox.innerHTML=`<div class="rq-err">Couldn't refine: ${esc(err&&err.message?err.message:String(err))}</div>`;
+  }
 }
 
 function copyText(txt,btn){
