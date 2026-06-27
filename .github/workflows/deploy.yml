@@ -1,0 +1,33 @@
+name: Deploy App
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: self-hosted   # Targets YOUR server runner
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create .env file
+        run: |
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+          echo "PORT=${{ secrets.PORT }}" >> .env
+
+      - name: Build Docker image
+        run: docker build -t friendapp:latest .
+
+      - name: Stop old container
+        run: |
+          docker stop friendapp || true
+          docker rm friendapp || true
+
+      - name: Run new container
+        run: |
+          docker run -d --name friendapp \
+            --network app-network \
+            --env-file .env \
+            -p 3000:3000 \
+            friendapp:latest
