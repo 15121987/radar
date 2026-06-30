@@ -3,34 +3,36 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="theme-color" content="#14110E" />
+<meta name="theme-color" content="#1C0E0F" />
 <meta name="color-scheme" content="dark" />
 <link rel="manifest" href="/manifest.json" />
 <link rel="apple-touch-icon" href="/icon-192.png" />
 <title>Current — from a link to a week of content</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
 <style>
   :root{
     color-scheme:dark;
-    --bg:#14110E;
-    --surface:#1C1813;
-    --surface-2:#241F18;
-    --border:#322B21;
-    --border-soft:#28221B;
-    --text:#EDE6D8;
-    --muted:#9A9082;
-    --faint:#6B6358;
-    --gold:#C9A24B;
-    --gold-bright:#E0B85C;
-    --gold-soft:rgba(201,162,75,.12);
-    --gold-line:rgba(201,162,75,.32);
+    --bg:#1C0E0F;
+    --surface:#28161A;
+    --surface-2:#301A1E;
+    --border:#412830;
+    --border-soft:#341F25;
+    --text:#ECE2CF;
+    --muted:#B6A892;
+    --faint:#80695F;
+    --gold:#F4A53C;
+    --gold-bright:#FFB94E;
+    --gold-soft:rgba(244,165,60,.12);
+    --gold-line:rgba(244,165,60,.34);
+    --ember:#E2592A;
+    --oxblood:#8B2635;
     --radius:14px;
     --maxw:980px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  html,body{height:100%;background:#14110E}
+  html,body{height:100%;background:#1C0E0F}
   body{
     background:var(--bg);
     color:var(--text);
@@ -38,14 +40,15 @@
     font-size:16px;
     line-height:1.5;
     -webkit-font-smoothing:antialiased;
-    background-image:radial-gradient(1200px 600px at 50% -12%, rgba(201,162,75,.05), transparent 70%);
+    background-image:radial-gradient(1200px 600px at 50% -12%, rgba(244,165,60,.05), transparent 70%);
   }
   /* faint living glow behind the hero */
   body::before{
     content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
     background:
-      radial-gradient(560px 380px at 32% 10%, rgba(201,162,75,.13), transparent 60%),
-      radial-gradient(520px 360px at 70% 4%, rgba(201,162,75,.07), transparent 62%);
+      radial-gradient(580px 400px at 30% 8%, rgba(244,165,60,.14), transparent 60%),
+      radial-gradient(560px 420px at 74% 2%, rgba(139,38,53,.26), transparent 62%),
+      radial-gradient(520px 380px at 56% 30%, rgba(226,89,42,.10), transparent 60%);
     animation:auroraDrift 17s ease-in-out infinite alternate;
   }
   @keyframes auroraDrift{
@@ -53,14 +56,22 @@
     100%{transform:translate3d(2.5%,1.5%,0) scale(1.08);opacity:1}
   }
   .wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px;position:relative}
+  /* live ember background */
+  #embers{position:fixed;inset:0;z-index:0;display:block}
+  .scrim{position:fixed;inset:0;z-index:1;pointer-events:none;
+    background:
+      radial-gradient(900px 600px at 50% 26%, transparent 0%, rgba(28,14,15,.18) 72%, rgba(28,14,15,.38) 100%),
+      linear-gradient(180deg, rgba(28,14,15,.12), transparent 24%, transparent 72%, rgba(28,14,15,.30))}
+  body>header,body>main,body>footer{position:relative;z-index:2}
+  @media (prefers-reduced-motion:reduce){#embers{opacity:.6}}
   ::selection{background:var(--gold-soft)}
 
   /* ---------- header ---------- */
   header{padding:34px 0 0}
   .brand{display:flex;align-items:baseline;gap:12px}
   .mark{
-    font-family:"Cormorant Garamond",serif;
-    font-weight:700;font-size:30px;letter-spacing:.5px;color:var(--text);
+    font-family:"Space Grotesk",sans-serif;
+    font-weight:700;font-size:30px;letter-spacing:-.5px;color:var(--text);
     position:relative;
   }
   .mark::after{
@@ -73,9 +84,10 @@
 
   /* ---------- hero ---------- */
   .hero{padding:64px 0 30px;text-align:center;max-width:680px;margin:0 auto}
+  .hero-tag{display:inline-block;font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:18px;padding-bottom:8px;border-bottom:1px solid var(--gold-line)}
   .hero h1{
-    font-family:"Cormorant Garamond",serif;font-weight:600;
-    font-size:clamp(34px,6vw,54px);line-height:1.04;letter-spacing:.2px;
+    font-family:"Space Grotesk",sans-serif;font-weight:600;
+    font-size:clamp(34px,6vw,54px);line-height:1.02;letter-spacing:-1px;
   }
   .hero h1 em{font-style:italic;color:var(--gold)}
   .hero p{color:var(--muted);margin-top:16px;font-size:17px}
@@ -95,14 +107,27 @@
   .bar input::placeholder{color:var(--faint)}
   .btn{
     border:0;cursor:pointer;font-family:inherit;font-weight:600;font-size:15px;
-    background:var(--gold);color:#1a1509;padding:13px 22px;border-radius:10px;
-    transition:background .2s, transform .08s;white-space:nowrap;
+    background:linear-gradient(100deg,var(--gold),var(--ember));color:#2A1206;padding:13px 22px;border-radius:10px;
+    transition:filter .2s, transform .08s;white-space:nowrap;
   }
-  .btn:hover{background:var(--gold-bright)}
+  .btn:hover{filter:brightness(1.06)}
   .btn:active{transform:translateY(1px)}
   .btn:disabled{opacity:.55;cursor:default}
 
   .chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:18px}
+  .examples{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin-top:14px}
+  .ex-lead{font-size:12.5px;color:var(--faint);margin-right:2px}
+  .ex{background:transparent;border:1px dashed var(--gold-line);color:var(--muted);border-radius:999px;padding:6px 13px;font-size:12.5px;cursor:pointer;font-family:inherit;transition:color .2s,border-color .2s,background .2s}
+  .ex:hover{color:var(--text);border-color:var(--gold);background:var(--gold-soft)}
+  .realism{display:flex;align-items:center;gap:10px;margin:4px 0 2px;cursor:pointer;user-select:none}
+  .realism input{position:absolute;opacity:0;width:0;height:0}
+  .rtrack{width:38px;height:22px;border-radius:999px;background:var(--border);position:relative;transition:background .2s;flex:0 0 auto}
+  .rthumb{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--muted);transition:transform .2s,background .2s}
+  .realism input:checked + .rtrack{background:linear-gradient(100deg,var(--gold),var(--ember))}
+  .realism input:checked + .rtrack .rthumb{transform:translateX(16px);background:#2A1206}
+  .realism input:focus-visible + .rtrack{outline:2px solid var(--gold);outline-offset:2px}
+  .rlabel{font-size:13px;color:var(--text);font-weight:500}
+  .rlabel em{font-style:normal;color:var(--faint);font-weight:400}
   .chip{
     background:transparent;border:1px solid var(--border);color:var(--muted);
     border-radius:999px;padding:7px 15px;font-size:13px;cursor:pointer;font-family:inherit;
@@ -113,7 +138,7 @@
   /* ---------- results ---------- */
   section.results{padding:28px 0 80px}
   .results-head{display:flex;align-items:baseline;gap:12px;margin-bottom:20px}
-  .results-head h2{font-family:"Cormorant Garamond",serif;font-weight:600;font-size:26px}
+  .results-head h2{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:26px}
   .results-head span{font-size:13px;color:var(--faint)}
   .refresh{
     display:none;margin-left:auto;align-self:center;align-items:center;gap:7px;
@@ -138,7 +163,7 @@
   .topic .num{font-size:12px;color:var(--gold);letter-spacing:.15em;font-weight:600}
   .topic-top{display:flex;align-items:center;gap:10px}
   .ttag{font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;color:var(--gold);border:1px solid var(--gold-line);border-radius:999px;padding:3px 9px;background:var(--gold-soft)}
-  .topic h3{font-family:"Cormorant Garamond",serif;font-weight:600;font-size:22px;line-height:1.15;margin:8px 0 8px}
+  .topic h3{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:22px;line-height:1.15;margin:8px 0 8px}
   .topic p{color:var(--muted);font-size:14px;line-height:1.5}
   .topic .aud{margin-top:14px;font-size:11.5px;letter-spacing:.05em;color:var(--faint);text-transform:uppercase}
   .topic .go{margin-top:14px;color:var(--gold);font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;opacity:.8}
@@ -152,7 +177,7 @@
     display:flex;align-items:center;gap:8px;padding:6px 0;margin-bottom:18px;transition:color .2s;
   }
   .back:hover{color:var(--text)}
-  .work-title{font-family:"Cormorant Garamond",serif;font-weight:600;font-size:clamp(26px,4.5vw,38px);line-height:1.08}
+  .work-title{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:clamp(26px,4.5vw,38px);line-height:1.08}
   .work-angle{color:var(--muted);margin-top:10px;max-width:640px}
   .work-aud{display:inline-block;margin-top:14px;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);border:1px solid var(--gold-line);border-radius:999px;padding:5px 12px}
 
@@ -169,7 +194,7 @@
   .card{
     background:var(--surface);border:1px solid var(--border-soft);border-radius:var(--radius);
     padding:24px;animation:fade .5s cubic-bezier(.22,.61,.36,1);
-    box-shadow:0 14px 40px rgba(0,0,0,.22),0 0 0 1px rgba(201,162,75,.05) inset;
+    box-shadow:0 14px 40px rgba(0,0,0,.22),0 0 0 1px rgba(244,165,60,.05) inset;
   }
   @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
   .card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:12px}
@@ -182,7 +207,7 @@
   .copy:hover{border-color:var(--gold-line);color:var(--text)}
   .copy.done{color:var(--gold);border-color:var(--gold-line)}
 
-  .hook{font-family:"Cormorant Garamond",serif;font-size:24px;font-weight:600;line-height:1.2;color:var(--text);margin-bottom:20px}
+  .hook{font-family:"Space Grotesk",sans-serif;font-size:24px;font-weight:600;line-height:1.2;color:var(--text);margin-bottom:20px}
   .beat{display:grid;grid-template-columns:64px 1fr;gap:16px;padding:14px 0;border-top:1px solid var(--border-soft)}
   .beat:first-of-type{border-top:0;padding-top:0}
   .beat .t{color:var(--gold);font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
@@ -197,7 +222,7 @@
   .slide p{color:var(--muted);font-size:14px;line-height:1.5}
 
   .post{white-space:pre-wrap;font-size:15.5px;line-height:1.65;color:var(--text)}
-  .compliance{display:none;margin:0 0 18px;padding:11px 14px;border-radius:10px;background:rgba(201,162,75,.10);border:1px solid var(--gold-line);color:var(--muted);font-size:13px;line-height:1.5}
+  .compliance{display:none;margin:0 0 18px;padding:11px 14px;border-radius:10px;background:rgba(244,165,60,.10);border:1px solid var(--gold-line);color:var(--muted);font-size:13px;line-height:1.5}
   .compliance b{color:var(--gold)}
   .card-actions{display:flex;align-items:center;gap:12px}
   .vernav{display:flex;align-items:center;gap:6px}
@@ -212,8 +237,8 @@
   .refine-box{display:flex;gap:8px}
   .refine-box input{flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text);font-family:inherit;font-size:14px;outline:none}
   .refine-box input:focus{border-color:var(--gold-line)}
-  .btn-sm{background:var(--gold);color:#1a1509;border:0;border-radius:9px;padding:10px 16px;font-family:inherit;font-weight:600;font-size:13.5px;cursor:pointer;white-space:nowrap}
-  .btn-sm:hover{background:var(--gold-bright)}
+  .btn-sm{background:linear-gradient(100deg,var(--gold),var(--ember));color:#2A1206;border:0;border-radius:9px;padding:10px 16px;font-family:inherit;font-weight:600;font-size:13.5px;cursor:pointer;white-space:nowrap}
+  .btn-sm:hover{filter:brightness(1.06)}
   .refine-q{margin-top:14px}
   .rq-loading{font-size:13px;color:var(--muted);padding:8px 0}
   .rq-err{font-size:13px;color:#d99;padding:8px 0}
@@ -227,7 +252,7 @@
   .rq-other{width:100%;max-width:280px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-family:inherit;font-size:13px;outline:none}
   .rq-other:focus{border-color:var(--gold-line)}
   .rq-apply{margin-top:6px}
-  .nl-subject{font-family:"Cormorant Garamond",serif;font-size:24px;font-weight:600;line-height:1.2;color:var(--text);margin-bottom:6px}
+  .nl-subject{font-family:"Space Grotesk",sans-serif;font-size:24px;font-weight:600;line-height:1.2;color:var(--text);margin-bottom:6px}
   .nl-preview{color:var(--muted);font-size:14px;font-style:italic;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border-soft)}
   .nl-sec{margin-bottom:20px}
   .nl-sec h4{font-size:16px;font-weight:600;color:var(--text);margin-bottom:7px}
@@ -250,9 +275,9 @@
       radial-gradient(circle, transparent 0 56%, var(--gold-line) 56% 56.7%, transparent 56.7%),
       radial-gradient(circle, transparent 0 76%, var(--gold-line) 76% 76.7%, transparent 76.7%)}
   .radar-sweep{position:absolute;inset:0;border-radius:50%;overflow:hidden;
-    background:conic-gradient(from 0deg, rgba(201,162,75,.5), rgba(201,162,75,.05) 50deg, transparent 90deg);
+    background:conic-gradient(from 0deg, rgba(244,165,60,.5), rgba(244,165,60,.05) 50deg, transparent 90deg);
     animation:radarSweep 1.9s linear infinite}
-  .radar-dot{position:absolute;top:50%;left:50%;width:7px;height:7px;border-radius:50%;background:var(--gold);transform:translate(-50%,-50%);box-shadow:0 0 12px rgba(201,162,75,.85)}
+  .radar-dot{position:absolute;top:50%;left:50%;width:7px;height:7px;border-radius:50%;background:var(--gold);transform:translate(-50%,-50%);box-shadow:0 0 12px rgba(244,165,60,.85)}
   @keyframes radarSweep{to{transform:rotate(360deg)}}
   @keyframes spin{to{transform:rotate(360deg)}}
   .loading .msg{font-size:14.5px}
@@ -280,6 +305,8 @@
 </style>
 </head>
 <body>
+  <canvas id="embers"></canvas>
+  <div class="scrim"></div>
   <header>
     <div class="wrap">
       <div class="brand">
@@ -292,14 +319,16 @@
   <main class="wrap">
     <!-- HERO / INPUT -->
     <div class="hero" id="hero">
+      <span class="hero-tag">The content radar for an Indian finance advisory</span>
       <h1>Catch what's trending.<br>Turn it into <em>content</em>.</h1>
-      <p>Paste a link or type any niche. Current reads the live web and hands you reels, carousels, LinkedIn posts, and newsletters ready to publish.</p>
+      <p>Pick a topic or paste a link. Current scans what's trending in Indian finance right now and turns it into reels, carousels, LinkedIn posts, and newsletters \u2014 simple enough to film on your phone.</p>
       <div class="bar">
-        <input id="q" type="text" placeholder="https://example.com  ·  or  ·  personal finance for millennials"
+        <input id="q" type="text" placeholder="Type a finance topic, or paste a link\u2026"
                autocomplete="off" spellcheck="false" aria-label="Link or topic" />
         <button class="btn" id="find">Find trends</button>
       </div>
       <div class="chips" id="chips"></div>
+      <div class="examples" id="examples"></div>
     </div>
 
     <!-- RESULTS -->
@@ -324,16 +353,41 @@
         <button class="tab" data-tab="linkedin">LinkedIn</button>
         <button class="tab" data-tab="newsletter">Newsletter</button>
       </div>
+      <label class="realism">
+        <input type="checkbox" id="realism" checked />
+        <span class="rtrack"><span class="rthumb"></span></span>
+        <span class="rlabel">Shoot-on-phone mode <em>— simple, low-budget drafts you can actually film</em></span>
+      </label>
       <div class="compliance" id="compliance"><b>Finance topic.</b> Drafts include general guardrails, but review for SEBI / regulatory compliance before publishing.</div>
       <div class="panel" id="panel"></div>
     </div>
   </main>
 
-  <footer class="wrap">Current scans live results for ideation. Verify facts and figures before publishing. · build v14</footer>
+  <footer class="wrap">Current scans live results for ideation. Verify facts and figures before publishing. · build v19</footer>
 
 <script>
 const API="/api/generate";
-const EXAMPLES=["Personal finance","Fitness & wellness","Travel","Tech & AI","Food & cooking","Sustainable fashion"];
+const NICHES=[
+  {label:"SWP", q:"SWP (Systematic Withdrawal Plan) for Indian investors"},
+  {label:"STP", q:"STP (Systematic Transfer Plan) for Indian investors"},
+  {label:"Bucketing", q:"bucketing strategy for investing"},
+  {label:"Bucketing for Retirement", q:"bucketing strategy for retirement planning"},
+  {label:"Taxation", q:"personal taxation for Indian investors"},
+  {label:"HUF", q:"HUF (Hindu Undivided Family) tax planning"}
+];
+const EX_RUN=[
+  "trending SWP angles this week",
+  "STP myths going viral right now",
+  "bucketing for retirement, explained simply"
+];
+const PROMPTS=[
+  "Try: trending SWP angles this week",
+  "Try: STP myths going viral right now",
+  "Try: bucketing for retirement, explained simply",
+  "Try: HUF tax-saving angles for families",
+  "Try: what taxation topics are people searching now",
+  "\u2026or paste a link / type any finance topic"
+];
 const LOAD_MSGS=["Reading the room…","Scanning live results…","Spotting what's rising…","Sorting signal from noise…"];
 const REFINE_CHIPS=[
   {label:"Punchier",instr:"Make it punchier and more attention-grabbing"},
@@ -343,26 +397,58 @@ const REFINE_CHIPS=[
   {label:"More detail",instr:"Add more depth and detail"}
 ];
 
-const state={input:"",topics:[],sel:null,tab:"reel",cache:{}};
+const state={input:"",topics:[],sel:null,tab:"reel",cache:{},realism:true};
+const REALISM_NOTE=`
+REALISM MODE: Keep this practical and down-to-earth, not over-produced. The person making this is a finance advisor with a small team and just a smartphone \u2014 no studio, no actors, no agency budget. For any reel or video, keep visuals simple and filmable in one or two takes (presenter talking to camera, simple on-screen text, everyday props, basic b-roll) and avoid anything needing crews, sets, drones, paid talent or heavy motion graphics. For every format, keep the language simple, natural and conversational (Hinglish-friendly), the kind an advisor can actually say or write without sounding scripted. Prefer clarity and authenticity over polish.`;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
 window.addEventListener("load",()=>document.body.classList.add("ready"));
 
-// example chips
+// niche buttons
 const chips=$("chips");
-EXAMPLES.forEach(e=>{
+NICHES.forEach(n=>{
   const b=document.createElement("button");
-  b.className="chip";b.textContent=e;
-  b.onclick=()=>{$("q").value=e;findTrends();};
+  b.className="chip";b.textContent=n.label;
+  b.onclick=()=>{$("q").value=n.q;findTrends();};
   chips.appendChild(b);
 });
+
+// tap-to-run examples
+const ex=$("examples");
+const lead=document.createElement("span");
+lead.className="ex-lead";lead.textContent="Not sure where to start? Try:";
+ex.appendChild(lead);
+EX_RUN.forEach(s=>{
+  const b=document.createElement("button");
+  b.className="ex";b.textContent=s;
+  b.onclick=()=>{$("q").value=s;findTrends();};
+  ex.appendChild(b);
+});
+
+// rotating placeholder (cycles while the box is empty and unfocused)
+(function(){
+  const qEl=$("q");let pi=0,rot=null;
+  function start(){stop();rot=setInterval(()=>{
+    if(document.activeElement!==qEl && !qEl.value){pi=(pi+1)%PROMPTS.length;qEl.setAttribute("placeholder",PROMPTS[pi]);}
+  },3200);}
+  function stop(){if(rot){clearInterval(rot);rot=null;}}
+  qEl.setAttribute("placeholder",PROMPTS[0]);
+  qEl.addEventListener("focus",()=>qEl.setAttribute("placeholder","Type a finance topic, or paste a link\u2026"));
+  qEl.addEventListener("blur",()=>{if(!qEl.value)qEl.setAttribute("placeholder",PROMPTS[pi]);});
+  start();
+})();
 
 $("find").onclick=()=>findTrends(false);
 $("refresh").onclick=()=>findTrends(true);
 $("q").addEventListener("keydown",e=>{if(e.key==="Enter")findTrends();});
 $("back").onclick=()=>{$("work").classList.remove("on");$("results").style.display="";$("hero").style.display="";window.scrollTo({top:0,behavior:"smooth"});};
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>setTab(t.dataset.tab));
+$("realism").addEventListener("change",e=>{
+  state.realism=e.target.checked;
+  state.cache={};
+  if(state.sel!=null && $("work").classList.contains("on")) loadTab();
+});
 
 async function callClaude(prompt,useSearch,wantJson){
   const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt,search:!!useSearch,json:!!wantJson})});
@@ -541,7 +627,7 @@ function renderEntry(key){
 
 function buildPrompt(tab,t){
   const base=`Topic: "${t.title}". Angle: ${t.angle}. Audience: ${t.audience}.
-COMPLIANCE: If this topic relates to investing, securities, trading, mutual funds, or financial products, follow responsible-finance rules \u2014 do not promise or imply assured/guaranteed returns, do not give specific buy/sell/hold tips as personal advice, keep it educational, include a brief risk note (e.g. investments are subject to market risks), and suggest consulting a licensed financial advisor (in India, a SEBI-registered advisor). If the topic is unrelated to finance, ignore this paragraph.`;
+COMPLIANCE: If this topic relates to investing, securities, trading, mutual funds, or financial products, follow responsible-finance rules \u2014 do not promise or imply assured/guaranteed returns, do not give specific buy/sell/hold tips as personal advice, keep it educational, include a brief risk note (e.g. investments are subject to market risks), and suggest consulting a licensed financial advisor (in India, a SEBI-registered advisor). If the topic is unrelated to finance, ignore this paragraph.${state.realism?REALISM_NOTE:""}`;
   if(tab==="reel")return `${base}
 Write a punchy short-form video reel (~30-45s). Respond with ONLY JSON, no markdown:
 {"hook":"scroll-stopping opening line","beats":[{"time":"0-3s","voiceover":"what's said","visual":"what's shown"}],"caption":"post caption","hashtags":["tag"]}
@@ -728,6 +814,77 @@ function copyText(txt,btn){
 if("serviceWorker" in navigator){
   window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}));
 }
+</script>
+<script>
+/* live ember background — self-contained */
+(function(){
+  var canvas = document.getElementById('embers');
+  if(!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var W, H, DPR, particles = [];
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var COLORS = ['244,165,60', '226,89,42', '255,185,78', '139,38,53'];
+
+  function resize(){
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = canvas.width = innerWidth * DPR;
+    H = canvas.height = innerHeight * DPR;
+    canvas.style.width = innerWidth + 'px';
+    canvas.style.height = innerHeight + 'px';
+  }
+  resize();
+  addEventListener('resize', resize);
+
+  function spawn(initial){
+    var r = (Math.random() * 2.8 + 0.9) * DPR;
+    return {
+      x: Math.random() * W,
+      y: initial ? Math.random() * H : H + Math.random() * 40 * DPR,
+      r: r,
+      vy: -(Math.random() * 0.5 + 0.18) * DPR,
+      vx: (Math.random() - 0.5) * 0.3 * DPR,
+      life: 0,
+      maxLife: Math.random() * 560 + 360,
+      flick: Math.random() * Math.PI * 2,
+      color: COLORS[Math.floor(Math.random() * COLORS.length)]
+    };
+  }
+
+  var COUNT = Math.round(Math.min(150, innerWidth / 8));
+  for (var i = 0; i < COUNT; i++) particles.push(spawn(true));
+
+  function frame(){
+    ctx.fillStyle = 'rgba(28,14,15,0.15)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'lighter';
+    for (var k = 0; k < particles.length; k++){
+      var p = particles[k];
+      p.life++;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vx += (Math.random() - 0.5) * 0.02 * DPR;
+      p.flick += 0.05;
+      var fade = Math.sin((p.life / p.maxLife) * Math.PI);
+      var alpha = Math.max(0, (0.62 + 0.32 * Math.sin(p.flick)) * fade);
+      ctx.beginPath();
+      ctx.shadowBlur = 16 * DPR;
+      ctx.shadowColor = 'rgba(' + p.color + ',' + alpha + ')';
+      ctx.fillStyle = 'rgba(' + p.color + ',' + alpha + ')';
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+      if (p.life >= p.maxLife || p.y < -20 * DPR){
+        var n = spawn(false);
+        for (var key in n) p[key] = n[key];
+      }
+    }
+    ctx.shadowBlur = 0;
+    ctx.globalCompositeOperation = 'source-over';
+    if (!reduce) requestAnimationFrame(frame);
+  }
+  ctx.fillStyle = '#1C0E0F';
+  ctx.fillRect(0, 0, W, H);
+  frame();
+})();
 </script>
 </body>
 </html>
