@@ -1,33 +1,26 @@
-name: Deploy App
+name: Deploy
 
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   deploy:
-    runs-on: self-hosted   # Targets YOUR server runner
+    runs-on: ubuntu-latest
+    environment: production
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Create .env file
+      - name: Trigger webhook with secrets
+        env:
+          URL: ${{ secrets.DEPLOY_URL }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
         run: |
-          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
-          echo "PORT=${{ secrets.PORT }}" >> .env
-
-      - name: Build Docker image
-        run: docker build -t friendapp:latest .
-
-      - name: Stop old container
-        run: |
-          docker stop friendapp || true
-          docker rm friendapp || true
-
-      - name: Run new container
-        run: |
-          docker run -d --name friendapp \
-            --network app-network \
-            --env-file .env \
-            -p 3000:3000 \
-            friendapp:latest
+          curl -fsS -X POST "${URL}" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n \
+              --arg token "${WEBHOOK_SECRET}" \
+              --arg gemini "${GEMINI_API_KEY}" \
+              --arg anthropic "${ANTHROPIC_API_KEY}" \
+              '{token: $token, secrets: {GEMINI_API_KEY: $gemini, ANTHROPIC_API_KEY: $anthropic}}')"
